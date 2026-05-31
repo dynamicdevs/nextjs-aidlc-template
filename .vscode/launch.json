@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: debug (attach)",
+      "type": "node",
+      "request": "attach",
+      "address": "nextjs-app",
+      "port": 9229,
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "/var/www/html",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Next.js: client (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Next.js: full stack (attach + Chrome)",
+      "configurations": ["Next.js: debug (attach)", "Next.js: client (Chrome)"],
+      "stopAll": true
+    }
+  ]
+}

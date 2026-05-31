@@ -1,0 +1,10 @@
+minimumReleaseAgeExclude:
+  - claudecode-aidlc@0.3.0
+supportedArchitectures:
+  os:
+    - linux
+  cpu:
+    - x64
+  libc:
+    - glibc
+    - musl

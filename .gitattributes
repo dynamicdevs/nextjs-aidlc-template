@@ -1,0 +1,65 @@
+# Line endings
+*               text=auto eol=lf
+
+# Source code
+*.js            text eol=lf
+*.jsx           text eol=lf
+*.ts            text eol=lf
+*.tsx           text eol=lf
+*.mjs           text eol=lf
+*.cjs           text eol=lf
+*.json          text eol=lf
+*.jsonc         text eol=lf
+*.md            text eol=lf
+*.mdx           text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.css           text eol=lf
+*.scss          text eol=lf
+*.html          text eol=lf
+
+# Config files that should keep LF
+*.gitignore     text eol=lf
+*.gitattributes text eol=lf
+*.editorconfig  text eol=lf
+.env.example    text eol=lf
+
+# Lock files (never normalize, must match exactly)
+pnpm-lock.yaml  text eol=lf -diff
+package-lock.json text eol=lf -diff
+yarn.lock       text eol=lf -diff
+bun.lockb       binary
+
+# Binary files
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.webp          binary
+*.svg           text
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.eot           binary
+*.mp4           binary
+*.webm          binary
+*.pdf           binary
+*.zip           binary
+*.tar.gz        binary
+
+# Generated files
+.next/**        text eol=lf
+out/**          text eol=lf
+dist/**         text eol=lf
+build/**        text eol=lf
+
+# Exclude from git archive (releases)
+/.github/       export-ignore
+.devcontainer/  export-ignore
+.cursor/        export-ignore
+.kiro/          export-ignore
+.claude/        export-ignore
+.opencode/      export-ignore
+AGENTS.md       export-ignore
+CLAUDE.md       export-ignore

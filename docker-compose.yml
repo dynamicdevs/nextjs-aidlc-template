@@ -1,0 +1,103 @@
+name: nextjs-app
+
+services:
+  nextjs-devcontainer:
+    container_name: nextjs-devcontainer
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+      target: devcontainer
+    image: nextjs/code
+    volumes:
+      - '.:/var/www/html'
+      - nextjs-node-home:/home/node
+    networks:
+      - nextjs-network
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  nextjs-app:
+    container_name: nextjs-app
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+      target: app
+    image: nextjs/app
+    ports:
+      - '${APP_PORT:-3000}:3000'
+      - '${DEBUG_PORT:-9229}:9229'
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      nextjs-postgres:
+        condition: service_healthy
+      nextjs-pnpm:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000']
+      interval: 5s
+      timeout: 20s
+      retries: 10
+    restart: on-failure
+    networks:
+      - nextjs-network
+
+  nextjs-postgres:
+    container_name: nextjs-postgres
+    image: postgres:18-alpine
+    ports:
+      - '${FORWARD_DB_PORT:-5432}:5432'
+    environment:
+      POSTGRES_DB: '${DB_DATABASE:-nextjs}'
+      POSTGRES_USER: '${DB_USERNAME:-username}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:-password}'
+    volumes:
+      - 'nextjs-postgres:/var/lib/postgresql'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-username}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: on-failure
+    networks:
+      - nextjs-network
+
+  nextjs-pgadmin:
+    container_name: nextjs-pgadmin
+    image: dpage/pgadmin4
+    ports:
+      - '8082:80'
+    environment:
+      PGADMIN_DEFAULT_EMAIL: 'admin@nextjs.dev'
+      PGADMIN_DEFAULT_PASSWORD: 'password'
+    depends_on:
+      - nextjs-postgres
+    volumes:
+      - 'nextjs-pgadmin-data:/var/lib/pgadmin'
+    restart: on-failure
+    networks:
+      - nextjs-network
+
+  nextjs-pnpm:
+    container_name: nextjs-pnpm
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+      target: pnpm
+    image: nextjs/pnpm
+    volumes:
+      - .:/var/www/html
+    networks:
+      - nextjs-network
+
+networks:
+  nextjs-network:
+    driver: bridge
+
+volumes:
+  nextjs-postgres:
+    driver: local
+  nextjs-node-home:
+    driver: local
+  nextjs-pgadmin-data:
+    driver: local

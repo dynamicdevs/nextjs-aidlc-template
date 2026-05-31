@@ -1,0 +1,94 @@
+{
+  "features": {
+    "ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli:1": {
+      "version": "1.0.2",
+      "resolved": "ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli@sha256:d7ae5139e62443070175cae13c275ae08efa8d89d6d5d432f96f3f9df51c2030",
+      "integrity": "sha256:d7ae5139e62443070175cae13c275ae08efa8d89d6d5d432f96f3f9df51c2030"
+    },
+    "ghcr.io/devcontainers-extra/features/claude-code:2": {
+      "version": "2.0.0",
+      "resolved": "ghcr.io/devcontainers-extra/features/claude-code@sha256:37b0d444a704021ee5f6d24242a4621bf337867d110e4e3c06b863a3a78122ac",
+      "integrity": "sha256:37b0d444a704021ee5f6d24242a4621bf337867d110e4e3c06b863a3a78122ac"
+    },
+    "ghcr.io/devcontainers-extra/features/direnv:1": {
+      "version": "1.0.3",
+      "resolved": "ghcr.io/devcontainers-extra/features/direnv@sha256:cd4c07352fb75cadcdde6f8cabba49224341eb4d5348870a7434b0ad15128a48",
+      "integrity": "sha256:cd4c07352fb75cadcdde6f8cabba49224341eb4d5348870a7434b0ad15128a48"
+    },
+    "ghcr.io/devcontainers-extra/features/fzf:1": {
+      "version": "1.0.15",
+      "resolved": "ghcr.io/devcontainers-extra/features/fzf@sha256:dbac92d89862c0f266453772ea0e73089d520ff66544f9c146480677fc2dbf7d",
+      "integrity": "sha256:dbac92d89862c0f266453772ea0e73089d520ff66544f9c146480677fc2dbf7d"
+    },
+    "ghcr.io/devcontainers-extra/features/git-lfs:1": {
+      "version": "1.0.3",
+      "resolved": "ghcr.io/devcontainers-extra/features/git-lfs@sha256:078d6fa43350ec0c2142fe3e3e432b4e0d2bab82c99ccee7206e8c7589e5bf62",
+      "integrity": "sha256:078d6fa43350ec0c2142fe3e3e432b4e0d2bab82c99ccee7206e8c7589e5bf62"
+    },
+    "ghcr.io/devcontainers-extra/features/ncdu:1": {
+      "version": "1.0.7",
+      "resolved": "ghcr.io/devcontainers-extra/features/ncdu@sha256:65b0ae95c5623f5eaa6701762acd81055cfceac568e2c6d815b31035c3fce216",
+      "integrity": "sha256:65b0ae95c5623f5eaa6701762acd81055cfceac568e2c6d815b31035c3fce216"
+    },
+    "ghcr.io/devcontainers-extra/features/pre-commit:2": {
+      "version": "2.0.18",
+      "resolved": "ghcr.io/devcontainers-extra/features/pre-commit@sha256:6e0bb2ce80caca1d94f44dab5d0653d88a1c00984e590adb7c6bce012d0ade6e",
+      "integrity": "sha256:6e0bb2ce80caca1d94f44dab5d0653d88a1c00984e590adb7c6bce012d0ade6e"
+    },
+    "ghcr.io/devcontainers-extra/features/ripgrep:1": {
+      "version": "1.0.15",
+      "resolved": "ghcr.io/devcontainers-extra/features/ripgrep@sha256:0dfc0ac16f0d6aa754d006a138fd4cb4a62c245d308306edf8ad1b7a80b8fdf2",
+      "integrity": "sha256:0dfc0ac16f0d6aa754d006a138fd4cb4a62c245d308306edf8ad1b7a80b8fdf2"
+    },
+    "ghcr.io/devcontainers-extra/features/tldr:2": {
+      "version": "2.0.16",
+      "resolved": "ghcr.io/devcontainers-extra/features/tldr@sha256:afe932195845bee211cc7624cc35c14b81d58897a9fe72806618090f44aa61f1",
+      "integrity": "sha256:afe932195845bee211cc7624cc35c14b81d58897a9fe72806618090f44aa61f1"
+    },
+    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+      "version": "0.0.5",
+      "resolved": "ghcr.io/devcontainers-extra/features/zsh-plugins@sha256:4dcc8e97307345cff26c2b4dfd840c2947b8b5bb20f492a68bdb9fbe9ccb67ba",
+      "integrity": "sha256:4dcc8e97307345cff26c2b4dfd840c2947b8b5bb20f492a68bdb9fbe9ccb67ba"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "version": "2.5.9",
+      "resolved": "ghcr.io/devcontainers/features/common-utils@sha256:cb0c4d3c276f157eed17935747e364178d75fee17f55c4e129966f64633deb3a",
+      "integrity": "sha256:cb0c4d3c276f157eed17935747e364178d75fee17f55c4e129966f64633deb3a"
+    },
+    "ghcr.io/devcontainers/features/copilot-cli:1": {
+      "version": "1.1.3",
+      "resolved": "ghcr.io/devcontainers/features/copilot-cli@sha256:e10d091ae7ef9b8d2ed5f601d75f5a090bc04acbac1a26d4cd3c0d5edde4ea10",
+      "integrity": "sha256:e10d091ae7ef9b8d2ed5f601d75f5a090bc04acbac1a26d4cd3c0d5edde4ea10"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "1.10.0",
+      "resolved": "ghcr.io/devcontainers/features/docker-outside-of-docker@sha256:c2c2cf829505ead8e4892c88c31b6594ae94a2bbb209e16e1fac456c1a3a624e",
+      "integrity": "sha256:c2c2cf829505ead8e4892c88c31b6594ae94a2bbb209e16e1fac456c1a3a624e"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "1.3.5",
+      "resolved": "ghcr.io/devcontainers/features/git@sha256:27905dc196c01f77d6ba8709cb82eeaf330b3b108772e2f02d1cd0d826de1251",
+      "integrity": "sha256:27905dc196c01f77d6ba8709cb82eeaf330b3b108772e2f02d1cd0d826de1251"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "1.1.0",
+      "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:d22f50b70ed75339b4eed1ba9ecde3a1791f90e88d37936517e3bace0bbad671",
+      "integrity": "sha256:d22f50b70ed75339b4eed1ba9ecde3a1791f90e88d37936517e3bace0bbad671"
+    },
+    "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/georgofenbeck/features/lazygit-linuxbinary@sha256:5f95752dbaf9a2798039e7cfd09887dca886654899de5c3c257d870c74230523",
+      "integrity": "sha256:5f95752dbaf9a2798039e7cfd09887dca886654899de5c3c257d870c74230523"
+    },
+    "ghcr.io/jsburckhardt/devcontainer-features/opencode:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/jsburckhardt/devcontainer-features/opencode@sha256:047f9144ad6540ee416cc2ea170f41bfae887c6c2cd883e14d2ab44a1ce20fc8",
+      "integrity": "sha256:047f9144ad6540ee416cc2ea170f41bfae887c6c2cd883e14d2ab44a1ce20fc8"
+    },
+    "ghcr.io/sliekens/devcontainer-features/codex:1": {
+      "version": "1.1.2",
+      "resolved": "ghcr.io/sliekens/devcontainer-features/codex@sha256:f109114053968fa79369bb20430905fa55809c90d9b91bf1b5ddcb15991920b7",
+      "integrity": "sha256:f109114053968fa79369bb20430905fa55809c90d9b91bf1b5ddcb15991920b7"
+    }
+  }
+}

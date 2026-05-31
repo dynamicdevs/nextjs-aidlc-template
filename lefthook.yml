@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{js,jsx,ts,tsx,json,jsonc}"
+      run: pnpm biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    agent-config:
+      glob: ".agent/**"
+      run: node scripts/generate-mcp.mjs && git diff --exit-code -- .claude/settings.json .opencode/opencode.json .cursor/mcp.json .kiro/mcp.json .kilocode/mcp.json .copilot/mcp.json .codex/mcp.json .antigravity/mcp.json
+      fail_text: "Drift detectado entre .agent/ y los configs generados. Haz commit de los archivos MCP regenerados."
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm commitlint --edit {1}

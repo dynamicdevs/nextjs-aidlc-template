@@ -1,0 +1,89 @@
+{
+  "name": "Next.js Dev Container",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "nextjs-devcontainer",
+  "workspaceFolder": "/var/www/html",
+  "remoteEnv": {
+    "OPENCODE_CONFIG": "/var/www/html/.opencode/opencode.json"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": true,
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers-extra/features/git-lfs:1": {},
+    "ghcr.io/devcontainers-extra/features/pre-commit:2": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers-extra/features/ripgrep:1": {},
+    "ghcr.io/devcontainers-extra/features/fzf:1": {},
+    "ghcr.io/devcontainers-extra/features/tldr:2": {},
+    "ghcr.io/devcontainers-extra/features/ncdu:1": {},
+    "ghcr.io/devcontainers-extra/features/direnv:1": {},
+    "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/opencode:1": {},
+    "ghcr.io/devcontainers-extra/features/claude-code:2": {},
+    "ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli:1": {},
+    "ghcr.io/devcontainers/features/copilot-cli:1": {},
+    "ghcr.io/sliekens/devcontainer-features/codex:1": {},
+    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+      "plugins": "colorize colored-man-pages command-not-found common-aliases copybuffer copypath cp encode64 git github git-commit git-extras git-flow gitignore history npm node sudo vscode zsh-autosuggestions zsh-syntax-highlighting",
+      "omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions.git https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "mounts": ["source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "supabase.supabase-vscode",
+        "prisma.prisma",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "biomejs.biome",
+        "ms-ossdata.vscode-pgsql",
+        "seatonjiang.gitmoji-vscode",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "GitHub.copilotworkspace",
+        "eamodio.gitlens",
+        "donjayamanne.githistory",
+        "ecmel.vscode-html-css",
+        "usernamehw.error-lens",
+        "streetsidesoftware.code-spell-checker",
+        "wayou.vscode-todo-highlight",
+        "ms-vscode.remote-repositories",
+        "joshbolduc.commitlint"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+          "zsh": {
+            "path": "zsh"
+          },
+          "fish": {
+            "path": "fish"
+          },
+          "tmux": {
+            "path": "tmux",
+            "icon": "terminal-tmux"
+          },
+          "pwsh": {
+            "path": "pwsh",
+            "icon": "terminal-powershell"
+          }
+        }
+      }
+    }
+  },
+  "remoteUser": "node",
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
+}

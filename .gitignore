@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docker
+.docker/
+
+# IDE
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+
+# AI tools — directories are generated, MCP configs are tracked
+.claude/
+.opencode/
+.cursor/
+.kiro/
+.kilo/
+.kilocode/
+.github-copilot/
+.codex/
+.antigravity/*
+.github/prompts
+.github/skills
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+
+# Misc
+.turbo/
+.vercel
+.tmp/
+
+# Prisma generated client
+/src/generated/prisma
