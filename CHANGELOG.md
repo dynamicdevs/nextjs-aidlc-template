@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- Add `lucide-react` and update package version ranges and pnpm build approval configuration.
+- Add `lucide-react`, update package version ranges, and enable approved pnpm dependency builds.
 
 ## [0.1.0] - 2026-06-13
 
