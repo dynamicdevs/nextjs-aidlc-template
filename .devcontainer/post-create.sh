@@ -33,6 +33,10 @@ if command -v opencode >/dev/null 2>&1; then
   pnpm exec opencode-aidlc setup --nested
 fi
 
+if command -v codex >/dev/null 2>&1; then
+  pnpm exec codex-aidlc-plugin setup --nested
+fi
+
 sudo chown -R node:node /home/node 2>/dev/null
 
 if [ -f "$HOME/.zshrc" ]; then
