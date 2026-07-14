@@ -3,6 +3,24 @@ set -e
 
 PNPM_STORE="/home/node/.local/share/pnpm/store"
 
+# Sync host SSH credentials into the container. /home/node is a named Docker
+# volume, so the host's ~/.ssh is not visible here; devcontainer.json bind-mounts
+# it read-only at ~/.ssh-host. Copy it into ~/.ssh owned by node with the strict
+# permissions ssh requires, so git over SSH works from inside the container.
+sync_ssh_credentials() {
+  [ -d "$HOME/.ssh-host" ] || return 0
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  cp -a "$HOME/.ssh-host/." "$HOME/.ssh/" 2>/dev/null || true
+  # cp -a preserves the read-only source mode; relax perms on the writable copy.
+  find "$HOME/.ssh" -type d -exec chmod 700 {} \; 2>/dev/null || true
+  find "$HOME/.ssh" -type f -exec chmod 600 {} \; 2>/dev/null || true
+  chmod 644 "$HOME/.ssh"/*.pub 2>/dev/null || true
+  echo "ssh: synced host credentials into ~/.ssh"
+}
+
+sync_ssh_credentials || true
+
 pnpm add -g @johnlindquist/worktree \
   --store-dir "$PNPM_STORE"
 
