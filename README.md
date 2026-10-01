@@ -184,6 +184,9 @@ cd .worktrees/<nombre>                  # aquí se abre el agente (claude, codex
   directorio, la entrada de git, la rama, el contenedor y la BD ya no están. Borra sin preguntar lo
   no commiteado: el cierre ordenado (commit, fusión a `develop`, la raíz al día) es la skill
   `worktree-close`.
+- Con [herdr](https://herdr.dev) (instalado en el devcontainer): `herdr` en la raíz y un panel por
+  worktree con `herdr worktree open --branch agent/<nombre>`. Su configuración del proyecto
+  (`.herdr/config.toml`) desactiva `herdr worktree create`.
 - No uses `git worktree add/remove` a pelo, ni `herdr worktree create`, ni los worktrees propios
   de Claude Code: no crean ni borran la BD, el `.env` ni el contenedor. `status` muestra lo que se
   haya filtrado. Los worktrees de AI-DLC (`.aidlc/worktrees/bolt-*`) son de `aidlc` y `status` los

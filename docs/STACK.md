@@ -28,6 +28,7 @@ pnpm dlx shadcn@latest add button
 | **Commitlint + Gitmoji** | Mensajes de commit estandarizados |
 | **Playwright** | Tests end-to-end |
 | **tsx** | Test runner Node.js nativo y ejecución de scripts TypeScript |
+| **herdr** | Terminales de los agentes de IA: un panel por worktree (feature del devcontainer, config en `.herdr/config.toml`) |
 | **`.devcontainer/wt/`** | Worktrees aislados (rama, BD y app propias) para agentes en paralelo |
 
 ## Backend / Database

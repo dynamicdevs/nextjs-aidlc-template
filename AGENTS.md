@@ -71,6 +71,16 @@ Se apagan a la vez con `touch .agent/hooks/.disabled` (y se reactivan al borrarl
 desactivan solos cuando la sesión ya corre dentro de un worktree. Para añadir o cambiar un hook se
 edita `.agent/hooks/hooks.json` y se ejecuta `pnpm generate:hooks`.
 
+### herdr
+
+El devcontainer instala [herdr](https://herdr.dev), el gestor de terminales para agentes de IA (un
+panel por agente, que sigue vivo al desconectarse y marca cuál está bloqueado esperando
+respuesta). Su configuración es del proyecto: `.herdr/config.toml`, cargada vía
+`HERDR_CONFIG_PATH`, que **sustituye** a `~/.config/herdr/config.toml`. Desactiva
+`herdr worktree create` (crearía un worktree sin BD, `.env` ni puertos): se crea con
+`.devcontainer/wt/new <nombre>` y se abre su panel con `herdr worktree open --branch agent/<nombre>`
+(`prefix+shift+g`).
+
 ### Ramas
 
 | Rama | Rol |

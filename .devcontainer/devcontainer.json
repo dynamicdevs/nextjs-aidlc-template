@@ -5,6 +5,7 @@
   "workspaceFolder": "/var/www/html",
   "remoteEnv": {
     "OPENCODE_CONFIG": "/var/www/html/.opencode/opencode.json",
+    "HERDR_CONFIG_PATH": "/var/www/html/.herdr/config.toml",
     "HOST_WORKSPACE_PATH": "${localWorkspaceFolder}"
   },
   "features": {
@@ -26,6 +27,7 @@
     "ghcr.io/devcontainers-extra/features/direnv:1": {},
     "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {},
     "ghcr.io/jsburckhardt/devcontainer-features/opencode:1": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/herdr:1": { "version": "v0.9.3" },
     "ghcr.io/devcontainers-extra/features/claude-code:2": {},
     "ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli:1": {},
     "ghcr.io/devcontainers/features/copilot-cli:1": {},
