@@ -12,6 +12,12 @@ onboarding = false
 [ui]
 agent_panel_sort = "spaces"
 
+# Panes open zsh, the devcontainer's shell (oh-my-zsh and its plugins). Left empty, herdr uses
+# $SHELL and then /bin/sh — and the devcontainer exports no SHELL (VS Code's terminal does not
+# either), so every pane came up in dash.
+[terminal]
+default_shell = "/bin/zsh"
+
 # Worktrees here go through .devcontainer/wt/new, which isolates the Postgres database, the
 # ports and the .env. `herdr worktree create` does a bare `git worktree add`: `isolate` never
 # runs, so the tree comes out with no .env, no database and no ports — and by default it lands
