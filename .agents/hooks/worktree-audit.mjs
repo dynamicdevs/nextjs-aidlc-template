@@ -7,7 +7,7 @@ import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The repo root is two levels up from .agent/hooks/ — no tool-specific env var,
+// The repo root is two levels up from .agents/hooks/ — no tool-specific env var,
 // and it resolves to the worktree root when this file runs inside one.
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 // Kill switch, kept out of any single tool's directory and out of git.

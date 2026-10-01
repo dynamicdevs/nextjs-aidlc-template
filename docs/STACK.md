@@ -45,7 +45,7 @@ pnpm dlx shadcn@latest add button
 - **DB UI local**: pgAdmin en `http://localhost:8082`
 
 ## AI Tooling
-- **MCP**: Configuración generada desde `.agent/` para Claude, opencode, Cursor, Kiro, Kilocode, GitHub Copilot, Codex y Antigravity
+- **MCP**: Configuración generada desde `.agents/` para Claude, opencode, Cursor, Kiro, Kilocode, GitHub Copilot, Codex y Antigravity
 - **AI-DLC v2 (AWS Labs)**: Metodología de desarrollo asistido por IA con 5 fases (initialization → ideation → inception → construction → operation). CLI nativo `aidlc` fijado en `.aidlc-version` e instalado por `pnpm aidlc:setup`, que genera los runtimes de Claude Code, Codex y opencode. Workspace versionado en `aidlc/`
 
 ## Extensiones VS Code recomendadas

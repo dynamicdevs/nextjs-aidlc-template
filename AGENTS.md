@@ -4,7 +4,7 @@ Template Next.js 16 + TypeScript + Tailwind CSS v4 con tooling de desarrollo com
 
 ## Setup
 
-`.agent/` es la **fuente de verdad** para configuración MCP de herramientas AI. `scripts/generate-mcp.mjs` genera los archivos de configuración MCP para cada herramienta:
+`.agents/` es la **fuente de verdad** para configuración MCP de herramientas AI. `.agents/scripts/generate-mcp.mjs` genera los archivos de configuración MCP para cada herramienta:
 
 | Herramienta | Archivo generado |
 |-------------|-----------------|
@@ -17,7 +17,7 @@ Template Next.js 16 + TypeScript + Tailwind CSS v4 con tooling de desarrollo com
 | Codex | `.codex/mcp.json` |
 | Antigravity | `.antigravity/mcp.json` |
 
-En `.agent/` viven también las **skills** compartidas (`.agent/skills/`, que `scripts/generate-skills.mjs` enlaza en `.claude/skills/`, `.agents/skills/` —Codex y opencode—, `.kiro/skills/` y `.cline/skills/`) y los **hooks** (`.agent/hooks/`, que `scripts/generate-hooks.mjs` cablea en `.claude/settings.local.json`, porque `.claude/settings.json` es de AI-DLC). Son enlaces y nunca copias: AI-DLC trata `.claude/` y `.agents/` como suyos, adopta en un refresco los ficheros que encuentra en sus `skills/` y los borra en el siguiente.
+En `.agents/` viven también las **skills** compartidas (`.agents/shared-skills/`, que `.agents/scripts/generate-skills.mjs` enlaza en `.claude/skills/`, `.agents/skills/` —Codex y opencode—, `.kiro/skills/` y `.cline/skills/`), los **hooks** (`.agents/hooks/`, que `.agents/scripts/generate-hooks.mjs` cablea en `.claude/settings.local.json`, porque `.claude/settings.json` es de AI-DLC) y los generadores (`.agents/scripts/`). Las skills no viven en `.agents/skills/` y se enlazan en vez de copiarse porque AI-DLC trata `.claude/` y `.agents/` como suyos: adopta en un refresco los ficheros que encuentra en sus `skills/` y los borra en el siguiente, aunque estén versionados, y solo respeta los enlaces simbólicos. Por eso `.agents/skills/` es lo único de `.agents/` que no se versiona.
 
 **Ejecutar tras clonar** para generar la configuración MCP, las skills y los hooks (`pnpm install` y el `post-create` del devcontainer lo hacen solos):
 
@@ -37,9 +37,9 @@ El devcontainer ya tiene esta variable configurada en `remoteEnv`.
 
 ### Añadir un MCP server
 
-1. Editar `.agent/config/mcp/source.json` (entrada nueva en `servers`)
+1. Editar `.agents/config/mcp/source.json` (entrada nueva en `servers`)
 2. Si el cliente lo necesita en formato distinto a remote, añadir un case en `to_claude_entry()` dentro del script
-3. Correr `node scripts/generate-mcp.mjs`
+3. Correr `node .agents/scripts/generate-mcp.mjs`
 
 ## Regla de trabajo: cada cambio, en su worktree
 
@@ -52,7 +52,7 @@ nunca en el checkout principal (`/var/www/html`). Se crea con `.devcontainer/wt/
 Quedan fuera de la regla el trabajo de solo lectura, la configuración del harness en `.claude/` y
 el paso final de fusionar el worktree a `develop`, que sí ocurre en la raíz.
 
-Lo respaldan tres hooks que se cubren entre sí (`.agent/hooks/`, cableados en Claude Code por
+Lo respaldan tres hooks que se cubren entre sí (`.agents/hooks/`, cableados en Claude Code por
 `pnpm generate:hooks`):
 
 - **`PreToolUse`** (`worktree-guard.mjs`) — **bloquea** la escritura en la raíz antes de que
@@ -67,9 +67,9 @@ Lo respaldan tres hooks que se cubren entre sí (`.agent/hooks/`, cableados en C
 - **`UserPromptSubmit`** (`worktree-reminder.sh`) — recuerda la regla en cada turno, para que no
   se diluya al compactar.
 
-Se apagan a la vez con `touch .agent/hooks/.disabled` (y se reactivan al borrarlo), y se
+Se apagan a la vez con `touch .agents/hooks/.disabled` (y se reactivan al borrarlo), y se
 desactivan solos cuando la sesión ya corre dentro de un worktree. Para añadir o cambiar un hook se
-edita `.agent/hooks/hooks.json` y se ejecuta `pnpm generate:hooks`.
+edita `.agents/hooks/hooks.json` y se ejecuta `pnpm generate:hooks`.
 
 ### herdr
 
@@ -143,7 +143,7 @@ registro del intent viaja con la rama `agent/<nombre>` y llega a `develop` al ce
 |------|---------------|-----------|
 | `aidlc/` | Sí | Workspace AI-DLC: reglas del método (`spaces/default/memory/`), estado, auditoría y artefactos de cada intent |
 | `.aidlc-version` | Sí | Versión fijada de AI-DLC |
-| `.claude/`, `.codex/`, `.agents/`, `.aidlc/`, `.opencode/`, `opencode.json` | No | Runtimes por herramienta generados por `aidlc config` |
+| `.claude/`, `.codex/`, `.agents/skills/`, `.aidlc/`, `.opencode/`, `opencode.json` | No | Runtimes por herramienta generados por `aidlc config` |
 
 `AGENTS.md` y `.gitignore` contienen bloques gestionados por AI-DLC (`BEGIN AI-DLC:…` / `END AI-DLC:…`) y `AGENTS.md` otro de Next.js (`BEGIN:nextjs-agent-rules`); no los edites a mano.
 

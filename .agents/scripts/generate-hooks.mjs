@@ -4,9 +4,9 @@ import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
-const sourcePath = ".agent/hooks/hooks.json";
+const sourcePath = ".agents/hooks/hooks.json";
 const absoluteSourcePath = resolve(root, sourcePath);
 
 const checkMode = process.argv.includes("--check");
@@ -26,9 +26,9 @@ for (const hook of hooks) {
     console.error(`ERROR: hook '${hook.id ?? "?"}' must declare id, event, interpreter and script`);
     process.exit(1);
   }
-  if (!existsSync(resolve(root, ".agent/hooks", hook.script))) {
+  if (!existsSync(resolve(root, ".agents/hooks", hook.script))) {
     console.error(
-      `ERROR: hook '${hook.id}' points at .agent/hooks/${hook.script}, which does not exist`,
+      `ERROR: hook '${hook.id}' points at .agents/hooks/${hook.script}, which does not exist`,
     );
     process.exit(1);
   }
@@ -53,11 +53,11 @@ function toolExists(cmd) {
   return commandExists(cmd) || existsSync(resolve(homedir(), ".local/bin", cmd));
 }
 
-// A hook group is ours when every command in it runs a script from .agent/hooks/.
-const OWNED = "/.agent/hooks/";
+// A hook group is ours when every command in it runs a script from .agents/hooks/ — or from
+// .agent/hooks/, its path before the rename, so wiring written back then is replaced, not doubled.
+const OWNED = /\/\.agents?\/hooks\//;
 const isOwned = (group) =>
-  (group.hooks ?? []).length > 0 &&
-  group.hooks.every((h) => String(h.command ?? "").includes(OWNED));
+  (group.hooks ?? []).length > 0 && group.hooks.every((h) => OWNED.test(String(h.command ?? "")));
 
 // Hooks are the least portable of the generated config kinds: skills and MCP servers are the
 // same file in a different directory, but a hook is a contract of events that each tool names
@@ -95,7 +95,7 @@ const toolAdapters = {
 
         const entry = {
           type: "command",
-          command: `${hook.interpreter} "$CLAUDE_PROJECT_DIR/.agent/hooks/${hook.script}"`,
+          command: `${hook.interpreter} "$CLAUDE_PROJECT_DIR/.agents/hooks/${hook.script}"`,
         };
         if (hook.timeout) entry.timeout = hook.timeout;
         if (hook.statusMessage) entry.statusMessage = hook.statusMessage;
