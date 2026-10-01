@@ -17,7 +17,9 @@ services:
       - 'host.docker.internal:host-gateway'
 
   nextjs-app:
-    container_name: nextjs-app
+    # APP_CONTAINER_NAME and CODE_PATH come from a worktree's .env when .devcontainer/wt/app
+    # starts its own copy of this service; unset, they are the root stack's.
+    container_name: ${APP_CONTAINER_NAME:-nextjs-app}
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
@@ -27,7 +29,7 @@ services:
       - '${APP_PORT:-3000}:3000'
       - '${DEBUG_PORT:-9229}:9229'
     volumes:
-      - .:/var/www/html
+      - '${CODE_PATH:-.}:/var/www/html'
     depends_on:
       nextjs-postgres:
         condition: service_healthy

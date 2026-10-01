@@ -80,6 +80,11 @@
       "resolved": "ghcr.io/georgofenbeck/features/lazygit-linuxbinary@sha256:5f95752dbaf9a2798039e7cfd09887dca886654899de5c3c257d870c74230523",
       "integrity": "sha256:5f95752dbaf9a2798039e7cfd09887dca886654899de5c3c257d870c74230523"
     },
+    "ghcr.io/jsburckhardt/devcontainer-features/herdr:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/jsburckhardt/devcontainer-features/herdr@sha256:6cd1417ff2af435e4b320612f494288b219d3f5dd4ce5f967b510897f5c663f2",
+      "integrity": "sha256:6cd1417ff2af435e4b320612f494288b219d3f5dd4ce5f967b510897f5c663f2"
+    },
     "ghcr.io/jsburckhardt/devcontainer-features/opencode:1": {
       "version": "1.1.1",
       "resolved": "ghcr.io/jsburckhardt/devcontainer-features/opencode@sha256:047f9144ad6540ee416cc2ea170f41bfae887c6c2cd883e14d2ab44a1ce20fc8",

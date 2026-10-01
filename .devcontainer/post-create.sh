@@ -21,9 +21,6 @@ sync_ssh_credentials() {
 
 sync_ssh_credentials || true
 
-pnpm add -g @johnlindquist/worktree \
-  --store-dir "$PNPM_STORE"
-
 pnpm add -g cline \
   --allow-build=cline \
   --allow-build=protobufjs \
@@ -43,17 +40,31 @@ if ! command -v kimi >/dev/null 2>&1; then
 curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
 fi
 
-if command -v claude >/dev/null 2>&1; then
-  pnpm exec claudecode-aidlc setup
-fi
+# Archify: diagram skill (architecture, workflow, sequence, data flow and lifecycle) that
+# renders self-contained HTML. Not an npm dependency and NOT in package.json: `archify` on the
+# registry belongs to another author and another project. What gets installed is the skill's
+# directory (SKILL.md + bin/ + renderers/ + schemas/), invoked through paths relative to it.
+#
+# Global, not per project, on purpose: it lands in ~/.claude/skills, inside the
+# nextjs-node-home volume, so it survives rebuilds and every worktree sees it. A project copy
+# would not: .claude/ is gitignored, and AI-DLC owns .claude/skills, adopting what it finds
+# there on one refresh and deleting it on the next.
+#
+# No "already installed" guard: the skill does not self-update (its own SKILL.md says so), so
+# this re-run on every provisioning is its only update path. `--copy` makes it self-contained
+# instead of a link into the CLI's cache.
+npx -y skills add tt-a1i/archify --skill archify --agent claude-code --global --copy --yes || true
 
-if command -v opencode >/dev/null 2>&1; then
-  pnpm exec opencode-aidlc setup --nested
-fi
+# AI-DLC: install the CLI pinned in .aidlc-version and configure every
+# installed harness (Claude Code, Codex, opencode). Never blocks the container.
+bash scripts/setup-aidlc.sh || echo "aidlc: setup incomplete; run 'pnpm aidlc:setup' to retry"
 
-if command -v codex >/dev/null 2>&1; then
-  pnpm exec codex-aidlc-plugin setup --nested
-fi
+# Per-tool AI config from the versioned sources in .agent/: MCP servers, the shared skills
+# and the worktree hooks. `pnpm install` regenerates them too, but it runs in the nextjs-pnpm
+# container, where none of the agent CLIs are installed. Node directly, not `pnpm generate`:
+# node_modules may still be installing at this point, and the generators need none of it.
+node scripts/generate-mcp.mjs && node scripts/generate-skills.mjs && node scripts/generate-hooks.mjs \
+  || echo "agents: config generation incomplete; run 'pnpm generate' to retry"
 
 sudo chown -R node:node /home/node 2>/dev/null
 

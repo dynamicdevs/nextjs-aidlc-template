@@ -1,0 +1,33 @@
+# herdr config for THIS project. `.devcontainer/devcontainer.json` points HERDR_CONFIG_PATH
+# here, and that variable REPLACES ~/.config/herdr/config.toml — it does not merge with it. So
+# anything you want herdr to do inside this devcontainer has to live in this file, personal
+# preferences included.
+#
+# It is versioned on purpose: the guardrail below is a project rule, not a user taste, and in
+# ~/.config it would be invisible to everyone else and lost whenever the home volume is
+# recreated. Other projects are unaffected — they never read this file.
+
+onboarding = false
+
+[ui]
+agent_panel_sort = "spaces"
+
+# Panes open zsh, the devcontainer's shell (oh-my-zsh and its plugins). Left empty, herdr uses
+# $SHELL and then /bin/sh — and the devcontainer exports no SHELL (VS Code's terminal does not
+# either), so every pane came up in dash.
+[terminal]
+default_shell = "/bin/zsh"
+
+# Worktrees here go through .devcontainer/wt/new, which isolates the Postgres database, the
+# ports and the .env. `herdr worktree create` does a bare `git worktree add`: `isolate` never
+# runs, so the tree comes out with no .env, no database and no ports — and by default it lands
+# in ~/.herdr/worktrees, outside the repo bind mount and invisible from the host. See README.md
+# § "Worktrees para agentes en paralelo".
+[keys]
+new_worktree = ""                    # disabled on purpose; create with .devcontainer/wt/new
+open_worktree = "prefix+shift+g"     # the safe operation inherits the familiar chord
+
+[worktrees]
+# Fallback only: if a worktree is ever created from the TUI anyway, at least it lands inside
+# the bind mount, where .devcontainer/wt/status can flag it as not isolated.
+directory = "/var/www/html/.worktrees"

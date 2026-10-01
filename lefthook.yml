@@ -6,11 +6,19 @@ pre-commit:
       run: pnpm biome check --write --no-errors-on-unmatched {staged_files}
       stage_fixed: true
     agent-config:
-      glob: ".agent/**"
-      run: node scripts/generate-mcp.mjs && git diff --exit-code -- .claude/settings.json .opencode/opencode.json .cursor/mcp.json .kiro/mcp.json .kilocode/mcp.json .copilot/mcp.json .codex/mcp.json .antigravity/mcp.json
+      glob: ".agent/config/**"
+      run: node scripts/generate-mcp.mjs && git diff --exit-code -- .mcp.json .opencode/opencode.json .cursor/mcp.json .kiro/mcp.json .kilocode/mcp.json .copilot/mcp.json .codex/mcp.json .antigravity/mcp.json
       fail_text: "Drift detectado entre .agent/ y los configs generados. Haz commit de los archivos MCP regenerados."
+    agent-hooks:
+      glob: ".agent/hooks/**"
+      run: node scripts/generate-hooks.mjs
 
 commit-msg:
   commands:
     commitlint:
       run: pnpm commitlint --edit {1}
+    # A release to main carries its own CHANGELOG.md entry, copied from this same message by
+    # scripts/changelog-release.mjs (skill `release`). Silent for any other subject; `git merge`
+    # runs this hook too, which is where a release is made.
+    changelog-release:
+      run: node scripts/changelog-release.mjs --comprobar {1}

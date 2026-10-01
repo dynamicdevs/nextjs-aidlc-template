@@ -3,10 +3,7 @@ allowBuilds:
   esbuild: true
   lefthook: true
   prisma: true
-  sharp: true
   unrs-resolver: true
-minimumReleaseAgeExclude:
-  - claudecode-aidlc@0.3.0
 supportedArchitectures:
   os:
     - linux

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# isolate — what git does not bring to a freshly created worktree: an isolated .env (its own
+# database, ports and compose project) and that Postgres database. `new` runs it with
+# cwd = the worktree and ROOT_WORKTREE_PATH = root; by hand it is the same contract (cd into
+# the worktree first). Node deps are `new`'s job.
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+wt="$(pwd)"                                  # new runs us with cwd = the worktree
+name="$(sanitize "$(basename "$wt")")"
+[ -n "$name" ] || die "could not derive the worktree name from '$wt'"
+[ "$wt" = "$WT_DIR/$name" ] || die "run isolate from inside .worktrees/<name> (cwd is $wt)"
+db="$(db_name "$name")"
+
+slot="$(next_slot)"
+info "isolating '$name' → slot $slot · http://localhost:$(app_port "$slot") · debugger :$(debug_port "$slot") · db $db"
+
+# The worktree's .env: runtime (Next.js, Prisma) and compose keys in the same file. It starts
+# from the root's, which carries whatever the root runs with; a root without one (fresh
+# clone) still yields a working worktree from the example.
+if [ -f "$ROOT/.env" ]; then
+  cp "$ROOT/.env" "$wt/.env"
+else
+  cp "$ROOT/.env.example" "$wt/.env"
+  info "no root .env: the worktree's starts from .env.example"
+fi
+
+# Both URLs move to the worktree's database: DATABASE_URL is what the app reads, DIRECT_URL
+# what the Prisma CLI migrates (prisma.config.ts). Only the database name changes, so a
+# pooler or query string in the root's keeps working.
+for key in DATABASE_URL DIRECT_URL; do
+  url="$(get_env "$wt/.env" "$key" || true)"
+  [ -n "$url" ] || die "$key is missing from $wt/.env"
+  set_env "$wt/.env" "$key" "$(with_database "$url" "$db")"
+done
+set_env "$wt/.env" WT_SLOT "$slot"
+# The compose keys (ports, container name, host path of the bind mount) live in
+# common.sh § app_env, which `app up` re-applies.
+app_env "$wt/.env"
+
+# The isolated database on the shared Postgres: a real CREATE DATABASE, dropped by teardown.
+if pg -tAc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1; then
+  info "db $db already existed"
+else
+  pg -c "CREATE DATABASE \"$db\" OWNER \"$(pg_user)\"" >/dev/null && info "db $db created"
+fi
+
+info "isolated. Start its app with: .devcontainer/wt/app up $name"

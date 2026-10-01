@@ -28,6 +28,9 @@ pnpm dlx shadcn@latest add button
 | **Commitlint + Gitmoji** | Mensajes de commit estandarizados |
 | **Playwright** | Tests end-to-end |
 | **tsx** | Test runner Node.js nativo y ejecución de scripts TypeScript |
+| **herdr** | Terminales de los agentes de IA: un panel por worktree, con zsh (feature del devcontainer, config en `.herdr/config.toml`) |
+| **Archify** | Skill global de Claude Code que genera diagramas interactivos en HTML autocontenido (arquitectura, workflow, secuencia…); la instala `post-create` |
+| **`.devcontainer/wt/`** | Worktrees aislados (rama, BD y app propias) para agentes en paralelo |
 
 ## Backend / Database
 - **Base de datos**: PostgreSQL 18 (via Docker)
@@ -43,7 +46,7 @@ pnpm dlx shadcn@latest add button
 
 ## AI Tooling
 - **MCP**: Configuración generada desde `.agent/` para Claude, opencode, Cursor, Kiro, Kilocode, GitHub Copilot, Codex y Antigravity
-- **AI-DLC (AWS Labs)**: Metodología completa de desarrollo asistido por IA con 3 fases (inception → construction → operations). Reglas en `.aidlc/aidlc-rules/`. Plugins: `opencode-aidlc` y `claudecode-aidlc` como dev dependencies opcionales
+- **AI-DLC v2 (AWS Labs)**: Metodología de desarrollo asistido por IA con 5 fases (initialization → ideation → inception → construction → operation). CLI nativo `aidlc` fijado en `.aidlc-version` e instalado por `pnpm aidlc:setup`, que genera los runtimes de Claude Code, Codex y opencode. Workspace versionado en `aidlc/`
 
 ## Extensiones VS Code recomendadas
 - Tailwind CSS IntelliSense

@@ -4,7 +4,9 @@
   "service": "nextjs-devcontainer",
   "workspaceFolder": "/var/www/html",
   "remoteEnv": {
-    "OPENCODE_CONFIG": "/var/www/html/.opencode/opencode.json"
+    "OPENCODE_CONFIG": "/var/www/html/.opencode/opencode.json",
+    "HERDR_CONFIG_PATH": "/var/www/html/.herdr/config.toml",
+    "HOST_WORKSPACE_PATH": "${localWorkspaceFolder}"
   },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
@@ -25,6 +27,7 @@
     "ghcr.io/devcontainers-extra/features/direnv:1": {},
     "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {},
     "ghcr.io/jsburckhardt/devcontainer-features/opencode:1": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/herdr:1": { "version": "v0.9.3" },
     "ghcr.io/devcontainers-extra/features/claude-code:2": {},
     "ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli:1": {},
     "ghcr.io/devcontainers/features/copilot-cli:1": {},
@@ -38,7 +41,8 @@
   "initializeCommand": "mkdir -p ${localEnv:HOME}/.ssh",
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly"
+    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly",
+    "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached"
   ],
   "customizations": {
     "vscode": {
