@@ -3,7 +3,6 @@ allowBuilds:
   esbuild: true
   lefthook: true
   prisma: true
-  sharp: true
   unrs-resolver: true
 supportedArchitectures:
   os:

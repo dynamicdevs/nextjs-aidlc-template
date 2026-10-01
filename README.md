@@ -11,7 +11,7 @@ Next.js 16 + TypeScript + Tailwind CSS v4 + PostgreSQL + Prisma con tooling de d
 
 ### Opción B: Node.js local
 - Node.js 24+
-- pnpm
+- pnpm 12 (`corepack enable` usa la versión de `packageManager`)
 - PostgreSQL 18 (o usar DATABASE_URL apuntando a PostgreSQL)
 
 ---
