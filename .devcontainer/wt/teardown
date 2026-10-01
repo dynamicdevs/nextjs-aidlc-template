@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# teardown — dismantles a worktree completely (a bare `git worktree remove` neither drops
+# its database nor stops its app). Stops the app, drops its Postgres database, unregisters
+# its AI-DLC pin, removes the worktree, and then checks that all of it is really gone.
+#   teardown <name> [--branch]     --branch also deletes the agent/<name> branch
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+name="$(sanitize "${1:-}")"; [ -n "$name" ] || die "usage: teardown <name> [--branch]"
+case "$name" in release) die "'release' is main's worktree: remove it with git worktree remove (skill \`release\`)" ;; esac
+db="$(db_name "$name")"; wt="$WT_DIR/$name"; project="$(project_name "$name")"
+
+# Read whole before grepping: under pipefail a grep -q that stops early turns the writer's
+# SIGPIPE into «not found».
+registered() { local l; l="$(git -C "$ROOT" worktree list --porcelain)"; grep -q "^worktree .*/\.worktrees/$name\$" <<< "$l"; }
+branch_exists() { git -C "$ROOT" show-ref --verify --quiet "refs/heads/agent/$name"; }
+containers() { docker ps -aq --filter "label=com.docker.compose.project=$project" 2>/dev/null || true; }
+
+# Databases that belong to somebody else and are never dropped here, whatever the name: the
+# root's (DATABASE_URL of the root .env, `nextjs` without one), the root's test database
+# (package.json § test) and every other worktree's. Without this, `teardown foo` would drop
+# the main database of a worktree called foo_test.
+root_url="$(get_env "$ROOT/.env" DATABASE_URL || true)"
+root_db="nextjs"; [ -n "$root_url" ] && root_db="$(url_database "$root_url")"
+claimed=" $root_db ${DB_PREFIX}test "
+for env in "$WT_DIR"/*/.env; do
+  [ -f "$env" ] && [ "$env" != "$wt/.env" ] || continue
+  claimed+="$(url_database "$(get_env "$env" DATABASE_URL || true)") "
+done
+
+claimed_db() { case "$claimed" in *" $1 "*) return 0 ;; esac; return 1; }
+
+# Ours: the worktree's own database, and the `<db>_test` ones a test setup may have derived
+# from it.
+ours=()
+while IFS= read -r d; do
+  [ -n "$d" ] || continue
+  if claimed_db "$d"; then info "db $d belongs to another checkout: kept"; else ours+=("$d"); fi
+done < <(pg -tAc "SELECT datname FROM pg_database WHERE datname = '$db' OR datname ~ '^${db}_test(_[0-9]+)?\$'" 2>/dev/null || true)
+
+# A typo, or `agent/foo` (it sanitizes to agent_foo), must not print «removed» over nothing.
+if [ ! -e "$wt" ] && ! registered && ! branch_exists && [ "${#ours[@]}" -eq 0 ] && [ -z "$(containers)" ]; then
+  die "nothing named '$name': no directory, git entry, branch, database or container. See .devcontainer/wt/status."
+fi
+
+# A process still living in the tree comes first, before anything is removed: an interrupted
+# test run or a dev server left behind recreates files in the directory after the rm, git's
+# entry survives the prune and the branch refuses to go. The tree is reachable by two paths
+# (the container's and the host's mirror mount). This script's own ancestors are skipped:
+# the shell that called it may name the tree in its command line, and a shell sitting in the
+# directory writes nothing into it.
+bases=("$wt")
+[ -n "${HOST_WORKSPACE_PATH:-}" ] && bases+=("$HOST_WORKSPACE_PATH/.worktrees/$name")
+mine=" "; p=$$
+while [[ "$p" =~ ^[0-9]+$ ]] && [ "$p" -gt 1 ]; do
+  mine+="$p "
+  # The parent is the field after the state, which follows the LAST «)»: comm may hold spaces.
+  p="$(sed -E 's/^.*\) . ([0-9]+) .*$/\1/' "/proc/$p/stat" 2>/dev/null || true)"
+done
+living=()
+for proc in /proc/[0-9]*; do
+  pid="${proc#/proc/}"
+  case "$mine" in *" $pid "*) continue ;; esac
+  cwd="$(readlink "$proc/cwd" 2>/dev/null || true)/"
+  args="$(tr '\0' ' ' 2>/dev/null < "$proc/cmdline" || true)"
+  for b in "${bases[@]}"; do
+    if [[ "$cwd" == "$b/"* || "$args" == *"$b/"* || "$args" == *"$b "* ]]; then
+      living+=("$pid ${args:0:120}"); break
+    fi
+  done
+done
+if [ "${#living[@]}" -gt 0 ]; then
+  printf '  %s\n' "${living[@]}" >&2
+  die "processes still run inside '$name' (above). Stop them and run teardown again. Nothing was removed."
+fi
+
+# The app. The /proc scan above cannot see inside its container (another PID namespace), and
+# one that mounts the tree would recreate files in it just the same. `down -v` also removes
+# the network compose created for the project (it never touches the root's). Whatever is left
+# of the project — no .env to drive compose, a down that failed — goes by label.
+[ -f "$wt/.env" ] && { compose_wt "$name" down -v --remove-orphans 2>/dev/null || true; }
+left_ctrs="$(containers)"
+[ -n "$left_ctrs" ] && { docker rm -f $left_ctrs >/dev/null 2>&1 || true; }
+
+for d in "${ours[@]}"; do
+  pg -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$d'" >/dev/null 2>&1 || true
+  pg -c "DROP DATABASE IF EXISTS \"$d\"" >/dev/null 2>&1 || true
+done
+
+# wt/new pinned AI-DLC in the worktree: drop its registration in the machine's pins.json too,
+# or that version stays protected from pruning for a path that no longer exists.
+if [ -f "$wt/.aidlc-version" ] && command -v aidlc >/dev/null 2>&1; then
+  aidlc config --unpin --project-dir "$wt" --quiet >/dev/null 2>&1 || true
+fi
+
+# A failed rm does not stop the script: the check at the end says what is left.
+if [ -d "$wt" ]; then
+  git -C "$ROOT" worktree remove "$wt" --force 2>/dev/null || rm -rf "$wt" || true
+fi
+git -C "$ROOT" worktree prune
+
+if [ "${2:-}" = "--branch" ]; then
+  git -C "$ROOT" branch -D "agent/$name" >/dev/null 2>&1 || true
+fi
+
+# Say only what happened.
+left=()
+[ -e "$wt" ] && left+=("the directory $wt")
+registered && left+=("git's worktree entry")
+[ "${2:-}" = "--branch" ] && branch_exists && left+=("the branch agent/$name")
+[ -n "$(containers)" ] && left+=("containers of the compose project $project")
+if [ "${#ours[@]}" -gt 0 ]; then
+  list="$(printf "'%s'," "${ours[@]}")"
+  if still="$(pg -tAc "SELECT string_agg(datname, ' ') FROM pg_database WHERE datname IN (${list%,})" 2>/dev/null)"; then
+    [ -n "$still" ] && left+=("the databases $still")
+  else
+    left+=("(postgres unreachable: the databases were not checked)")
+  fi
+fi
+
+if [ "${#left[@]}" -gt 0 ]; then
+  printf '  %s\n' "${left[@]}" >&2
+  die "teardown of '$name' left the above behind. For the tree: check it is clean and its HEAD is in develop (git merge-base --is-ancestor <sha> develop), then rm -rf it, git worktree prune and git branch -d agent/$name."
+fi
+[ "${2:-}" = "--branch" ] && info "branch agent/$name deleted"
+[ "${#ours[@]}" -gt 0 ] && info "databases ${ours[*]} dropped"
+info "worktree '$name' removed"

@@ -1,0 +1,40 @@
+{
+  "$comment": [
+    "Tool-neutral hook manifest — the single source of truth for lifecycle hooks.",
+    "Each tool's adapter lives in scripts/generate-hooks.mjs and maps these events and tool",
+    "names onto whatever that tool calls them. Events: 'before-tool' (may block),",
+    "'after-tool' (reports), 'user-prompt' (injects context). Tool names: edit | write |",
+    "notebook-edit | shell. Scripts are referenced in place, not copied: the generator only",
+    "writes the wiring, so the code has exactly one home.",
+    "Kill switch for all of them: touch .agent/hooks/.disabled"
+  ],
+  "hooks": [
+    {
+      "id": "worktree-guard",
+      "event": "before-tool",
+      "tools": ["edit", "write", "notebook-edit", "shell"],
+      "interpreter": "node",
+      "script": "worktree-guard.mjs",
+      "timeout": 10,
+      "statusMessage": "Comprobando worktree...",
+      "description": "Blocks a write into the main checkout before it happens."
+    },
+    {
+      "id": "worktree-audit",
+      "event": "after-tool",
+      "tools": ["edit", "write", "notebook-edit", "shell"],
+      "interpreter": "node",
+      "script": "worktree-audit.mjs",
+      "timeout": 15,
+      "description": "Asks git what actually changed, catching writes no regex can predict."
+    },
+    {
+      "id": "worktree-reminder",
+      "event": "user-prompt",
+      "interpreter": "sh",
+      "script": "worktree-reminder.sh",
+      "timeout": 10,
+      "description": "Restates the worktree rule each turn so it survives compaction."
+    }
+  ]
+}

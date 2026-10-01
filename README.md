@@ -136,6 +136,78 @@ http://localhost:3000
 
 ---
 
+## Worktrees para agentes en paralelo
+
+Tooling para lanzar **varios agentes a la vez sin que se pisen el código ni la base de datos**.
+Cada agente trabaja en su propio `git worktree`, con su rama, su base de datos Postgres y
+(opcionalmente) su propia app en un puerto propio. Todo vive en `.devcontainer/wt/`; los agentes
+lo usan a través de las skills `worktree`, `worktree-close` y `release` (`.agent/skills/`).
+
+### Modelo mental
+
+```
+Stack raíz (proyecto `nextjs-app`)    ← compartido: nextjs-postgres, pgAdmin
+  /var/www/html                       ← árbol principal (rama develop)
+  .worktrees/
+    login/   → rama agent/login  · BD nextjs_login  · app :3100 · debug :9329
+    perfil/  → rama agent/perfil · BD nextjs_perfil · app :3200 · debug :9429
+    release/ → rama main (el worktree de las releases, sin slot ni BD propia)
+```
+
+- Los worktrees viven **dentro** del repo (`.worktrees/`, gitignoreado) para quedar dentro del bind
+  mount `.:/var/www/html` y ser visibles desde los contenedores.
+- **Requisito:** el stack raíz arriba (`docker compose up -d`). Nunca `docker compose down`: el
+  devcontainer vive en ese mismo compose.
+- Las rutas que git registra son las del **host** (`$HOST_WORKSPACE_PATH`, que `devcontainer.json`
+  monta también en su ruta real), así que GitKraken o lazygit abren los worktrees desde fuera del
+  contenedor. Requiere el repo en una ruta Linux, macOS o WSL.
+
+### Flujo de trabajo
+
+```bash
+.devcontainer/wt/new <nombre>           # worktree + rama agent/<nombre> + pnpm install + BD + .env + AI-DLC
+.devcontainer/wt/new <nombre> --seed    # además aplica las migraciones y el seed en su BD
+cd .worktrees/<nombre>                  # aquí se abre el agente (claude, codex, opencode…)
+.devcontainer/wt/app up <nombre>        # su propia app → http://localhost:<APP_PORT>
+.devcontainer/wt/app logs <nombre>      # sus logs
+.devcontainer/wt/app down <nombre>      # la para; la BD se queda hasta el teardown
+.devcontainer/wt/status                 # flota (slot, puerto, BD, contenedor), bolts de AI-DLC y restos
+.devcontainer/wt/teardown <nombre> --branch   # para la app, borra la BD, quita el worktree y la rama
+```
+
+- `new` se niega **antes de crear nada** si el worktree o la rama ya existen, o si el stack raíz
+  está caído. La rama nace del `HEAD` de la raíz, sin sus cambios sin commitear.
+- La app de un worktree es su propio contenedor `nextjs-wt-<nombre>-app` (la misma imagen y el
+  mismo servicio `nextjs-app` del compose), unido a la red raíz para llegar a `nextjs-postgres`.
+  El puerto se publica en el **host**; desde el devcontainer es `nextjs-wt-<nombre>-app:3000`.
+- `teardown` se niega si queda un proceso vivo dentro del árbol, y al final **comprueba** que el
+  directorio, la entrada de git, la rama, el contenedor y la BD ya no están. Borra sin preguntar lo
+  no commiteado: el cierre ordenado (commit, fusión a `develop`, la raíz al día) es la skill
+  `worktree-close`.
+- No uses `git worktree add/remove` a pelo, ni `herdr worktree create`, ni los worktrees propios
+  de Claude Code: no crean ni borran la BD, el `.env` ni el contenedor. `status` muestra lo que se
+  haya filtrado. Los worktrees de AI-DLC (`.aidlc/worktrees/bolt-*`) son de `aidlc` y `status` los
+  lista aparte.
+
+### Aislamiento por worktree
+
+| Recurso | Aislamiento |
+|---------|-------------|
+| Código | `.worktrees/<nombre>` + rama `agent/<nombre>` |
+| BD | `nextjs_<nombre>` en el **mismo** Postgres (`DATABASE_URL` y `DIRECT_URL` de su `.env`) |
+| Puertos | `APP_PORT=3000+100*slot`, `DEBUG_PORT=9229+100*slot` |
+| Contenedor | `nextjs-wt-<nombre>-app`, proyecto compose `nextjs-wt-<nombre>` |
+| Agentes | MCP, skills, hooks y AI-DLC generados dentro del worktree |
+
+### Liberar a producción
+
+Liberar es fusionar `develop` en `main` y empujar **las dos ramas**, desde el worktree `release`
+(`.worktrees/release`, en `main`). El mensaje de la fusión (`:rocket: chore(release): …`) **es** la
+entrada de `CHANGELOG.md`: `scripts/changelog-release.mjs` la copia y el hook `commit-msg` rechaza
+una release sin ella. El procedimiento completo está en la skill `release`.
+
+---
+
 ## Troubleshooting
 
 ### Puerto 3000 ya está en uso

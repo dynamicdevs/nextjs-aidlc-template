@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# app — starts/stops a worktree's own `nextjs-app` container: `next dev` with the Node
+# inspector, from the same image and the same compose file as the root's, brought up with
+# --no-deps (no second Postgres, no pnpm container) and joined to the root network
+# (nextjs-app_nextjs-network), so its DATABASE_URL reaches nextjs-postgres by name and the
+# devcontainer reaches it as nextjs-wt-<name>-app.
+#
+# Joining is safe for name resolution: a container joined with `docker network connect`
+# carries no service alias on the root network, so the root's own names still resolve to the
+# root's containers.
+#   app up <name>     → http://localhost:<APP_PORT> on the host, debugger on <DEBUG_PORT>
+#   app down <name>   → stops it — does not drop its database
+#   app logs <name>   → follows its output
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+cmd="${1:-}"; name="$(sanitize "${2:-}")"
+{ [ -n "$cmd" ] && [ -n "$name" ]; } || die "usage: app <up|down|logs> <name>"
+[ -d "$WT_DIR/$name" ] || die "worktree '$name' does not exist"
+env="$WT_DIR/$name/.env"
+[ -f "$env" ] || die "worktree '$name' has no .env (it was not created with wt/new)"
+
+case "$cmd" in
+  up)
+    # Re-derive the ports, the container name and the host path from the slot: the repo may
+    # have moved on the host since isolate wrote them.
+    app_env "$env"
+    compose_wt "$name" up -d --no-deps "$APP_SERVICE"
+    docker network connect "$SHARED_NET" "$(get_env "$env" APP_CONTAINER_NAME)" 2>/dev/null || true   # idempotent
+    info "app '$name' → http://localhost:$(get_env "$env" APP_PORT) · debugger :$(get_env "$env" DEBUG_PORT) (from the devcontainer: $(get_env "$env" APP_CONTAINER_NAME):3000)" ;;
+  down)
+    compose_wt "$name" down --remove-orphans
+    info "app '$name' stopped (its database stays until teardown)" ;;
+  logs)
+    compose_wt "$name" logs -f "$APP_SERVICE" ;;
+  *)
+    die "command: up | down | logs" ;;
+esac

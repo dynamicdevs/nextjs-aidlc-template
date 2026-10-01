@@ -1,6 +1,14 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes that reach `main`, newest release first.
+
+Each entry is a **release**: the merge of `develop` into `main` (`:rocket: chore(release): …`). Its
+title is that merge's subject and its text is the merge's body: it is written once, in the message,
+and `scripts/changelog-release.mjs` copies it here (skill `release`). Work branches do not touch this
+file; what is in `develop` and not yet in `main` is `git log --first-parent main..develop`.
+
+The `[Unreleased]` notes below predate this process: the first release folds them into its message,
+and the script replaces that section with the release entry.
 
 ## [Unreleased]
 

@@ -22,7 +22,7 @@ build/
 !.vscode/launch.json
 !.vscode/settings.json
 
-# AI tools — generated per machine by scripts/generate-mcp.mjs and scripts/setup-aidlc.sh
+# AI tools — generated per machine by scripts/generate-*.mjs and scripts/setup-aidlc.sh
 .claude/
 .opencode/
 .cursor/
@@ -32,12 +32,22 @@ build/
 .github-copilot/
 .codex/
 .antigravity/*
+.cline/
+.continue/
+.codebuddy/
+.junie/
 .github/prompts
 .github/skills
 .agents/
 .aidlc/
 .mcp.json
 opencode.json
+# Local kill switch and state of the worktree hooks (see .agent/hooks/hooks.json)
+.agent/hooks/.disabled
+.agent/hooks/.baseline
+
+# Worktrees for parallel agents (.devcontainer/wt/)
+.worktrees/
 
 # OS
 .DS_Store

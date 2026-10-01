@@ -21,9 +21,6 @@ sync_ssh_credentials() {
 
 sync_ssh_credentials || true
 
-pnpm add -g @johnlindquist/worktree \
-  --store-dir "$PNPM_STORE"
-
 pnpm add -g cline \
   --allow-build=cline \
   --allow-build=protobufjs \
@@ -46,6 +43,13 @@ fi
 # AI-DLC: install the CLI pinned in .aidlc-version and configure every
 # installed harness (Claude Code, Codex, opencode). Never blocks the container.
 bash scripts/setup-aidlc.sh || echo "aidlc: setup incomplete; run 'pnpm aidlc:setup' to retry"
+
+# Per-tool AI config from the versioned sources in .agent/: MCP servers, the shared skills
+# and the worktree hooks. `pnpm install` regenerates them too, but it runs in the nextjs-pnpm
+# container, where none of the agent CLIs are installed. Node directly, not `pnpm generate`:
+# node_modules may still be installing at this point, and the generators need none of it.
+node scripts/generate-mcp.mjs && node scripts/generate-skills.mjs && node scripts/generate-hooks.mjs \
+  || echo "agents: config generation incomplete; run 'pnpm generate' to retry"
 
 sudo chown -R node:node /home/node 2>/dev/null
 

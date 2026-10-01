@@ -78,7 +78,24 @@ pnpm aidlc:setup                         # instalar/configurar AI-DLC (versión 
 aidlc doctor                             # diagnóstico del CLI, runtimes, hooks y estado
 ```
 
-Los checkpoints de validación humana ocurren en cada gate. Cada workflow (intent) guarda su estado, auditoría y artefactos en `aidlc/spaces/<space>/intents/<YYMMDD>-<label>/`, que se versionan con el proyecto.
+Los checkpoints de validación humana ocurren en cada gate. Cada workflow (intent) guarda su estado, auditoría y artefactos en `aidlc/spaces/<space>/intents/<YYMMDD>-<label>/`, que se versionan con el proyecto. Un workflow se lanza desde su worktree (siguiente sección).
+
+## Worktrees para agentes en paralelo
+
+Cada cambio se trabaja en su propio worktree, con su rama `agent/<nombre>`, su BD `nextjs_<nombre>` y su app en un puerto propio (detalles en `README.md` § "Worktrees para agentes en paralelo"):
+
+```bash
+.devcontainer/wt/new <nombre> [--seed]        # crear y aislar (pnpm install, BD, .env, AI-DLC)
+.devcontainer/wt/app up|down|logs <nombre>    # su app → http://localhost:<APP_PORT>
+.devcontainer/wt/status                       # flota y restos
+.devcontainer/wt/teardown <nombre> --branch   # desmontar y comprobar
+```
+
+| Rama | Rol |
+|------|-----|
+| `agent/<nombre>` | Trabajo de un worktree |
+| `develop` | Integración (la raíz); los worktrees se fusionan aquí con la skill `worktree-close` |
+| `main` | Releases: `develop` → `main` con la skill `release` (escribe la entrada de `CHANGELOG.md`) |
 
 ## Comandos del proyecto
 
@@ -92,6 +109,7 @@ pnpm format           # Biome format (aplica correcciones)
 pnpm commit           # Commit con gitmoji
 pnpm test             # Ejecutar tests con tsx
 pnpm aidlc:setup      # Instalar y configurar AI-DLC
+pnpm generate         # Regenerar MCP, skills y hooks de las herramientas AI
 ```
 
 ## Prisma

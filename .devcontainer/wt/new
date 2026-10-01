@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# new — creates a worktree for an agent and isolates it:
+#   1. `git worktree add -b agent/<name> .worktrees/<name>`, run through the HOST path
+#      ($HOST_WORKSPACE_PATH: the same folder as $ROOT, mirror-mounted at its real host path
+#      by devcontainer.json), so the links git writes are host paths from the start and
+#      GitKraken/lazygit open the worktree from outside, without Git's relativeWorktrees
+#      extension (libgit2 does not support it). The worktree lands INSIDE the repo
+#      (.worktrees/, gitignored), so it is inside the bind mount the containers see.
+#   2. `pnpm install` in the worktree: node_modules, and its postinstall regenerates the MCP,
+#      skills and hooks wiring of the installed AI tools in it (.claude/ and the rest are
+#      gitignored, so git does not bring them).
+#   3. `isolate`, the one next to this script: .env with its slot and its own database, and the
+#      Prisma client generated against it.
+#   4. AI-DLC in the worktree (scripts/setup-aidlc.sh), so `/aidlc` runs there as well.
+#
+#   new <name> [--seed] [--no-aidlc]
+#     --seed      applies the migrations and runs the seed on the worktree's database
+#     --no-aidlc  skips step 4
+#
+# The main tree may be dirty: `git worktree add` does not care, and the new branch starts
+# from the root's HEAD, without the uncommitted changes.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$HERE/common.sh"
+
+seed=0; aidlc=1; pos=()
+for a in "$@"; do
+  case "$a" in
+    --seed) seed=1 ;;
+    --no-aidlc) aidlc=0 ;;
+    -*) die "unknown option $a (usage: new <name> [--seed] [--no-aidlc])" ;;
+    *) pos+=("$a") ;;
+  esac
+done
+[ "${#pos[@]}" -ge 1 ] || die "usage: new <name> [--seed] [--no-aidlc]"
+
+name="$(sanitize "${pos[0]}")"
+[ -n "$name" ] || die "invalid name"
+# `release` is main's own worktree (the `release` skill) and `test` would give the worktree the
+# root's test database (nextjs_test, in package.json).
+case "$name" in release|test) die "'$name' is reserved: pick another name" ;; esac
+branch="agent/$name"
+
+# Outside the devcontainer the host path IS the checkout.
+HOST_WORKSPACE_PATH="${HOST_WORKSPACE_PATH:-$ROOT}"
+
+# Everything that can refuse does so BEFORE anything is created: a half-made worktree is
+# what "already exists" on the next attempt would mean. That includes what isolate needs
+# (a .env to copy, the root stack up), because it runs after the worktree and the branch exist.
+[ -d "$HOST_WORKSPACE_PATH/.git" ] || die "\$HOST_WORKSPACE_PATH ($HOST_WORKSPACE_PATH) does not hold the repo: is the mirror mount from devcontainer.json up? (rebuild the devcontainer)"
+# The same checkout seen through two mounts: -ef compares inodes. A worktree's copy of this
+# script run without ROOT_WORKTREE_PATH derives ROOT from its own location (a linked worktree,
+# whose .git is a file), and would create the worktree under the root but look for it under itself.
+[ "$ROOT/.git" -ef "$HOST_WORKSPACE_PATH/.git" ] \
+  || die "ROOT ($ROOT) is not the checkout at \$HOST_WORKSPACE_PATH. Run the root's .devcontainer/wt/new, or set ROOT_WORKTREE_PATH=/var/www/html to run a branch's copy against the root"
+[ -f "$ROOT/.env" ] || [ -f "$ROOT/.env.example" ] || die "no .env nor .env.example in $ROOT: isolate starts the worktree's .env from one of them"
+host_repo_path >/dev/null            # dies when the root stack is down; isolate needs it
+docker exec "$POSTGRES_CONTAINER" pg_isready -q -U "$(pg_user)" >/dev/null 2>&1 \
+  || die "$POSTGRES_CONTAINER is not accepting connections: start the root stack (docker compose up -d)"
+[ -e "$WT_DIR/$name" ] && die "worktree '$name' already exists (see .devcontainer/wt/status)"
+git -C "$ROOT" show-ref --verify --quiet "refs/heads/$branch" \
+  && die "branch $branch already exists: another session may own it (git log -1 $branch). Pick another name, or delete the branch first"
+
+info "worktree .worktrees/$name on $branch…"
+git -C "$HOST_WORKSPACE_PATH" worktree add -b "$branch" ".worktrees/$name"
+
+info "node deps (pnpm install)…"
+( cd "$WT_DIR/$name" && pnpm install ) || die "pnpm install failed in .worktrees/$name. Finish by hand:
+    (cd $WT_DIR/$name && pnpm install && ROOT_WORKTREE_PATH=$ROOT bash $HERE/isolate)"
+
+# The isolate NEXT TO this script, not \$ROOT's: a branch's copy of these scripts can then be
+# exercised against the root before it is merged (ROOT_WORKTREE_PATH=/var/www/html
+# bash <branch>/.devcontainer/wt/new <name>), which is the only way to test them — the
+# scripts that run day to day are develop's.
+( cd "$WT_DIR/$name" && ROOT_WORKTREE_PATH="$ROOT" bash "$HERE/isolate" ) \
+  || die "isolate failed in .worktrees/$name: the worktree and $branch exist, but not its .env or its database. Fix the cause above and finish by hand:
+    (cd $WT_DIR/$name && ROOT_WORKTREE_PATH=$ROOT bash $HERE/isolate)"
+
+# The Prisma client is gitignored (src/generated/prisma): without it the seed, tsc and the
+# editor fail on the import. It needs the .env isolate just wrote (prisma.config.ts reads
+# DIRECT_URL); the app regenerates it on every start anyway (predev).
+info "Prisma client (prisma generate)…"
+( cd "$WT_DIR/$name" && pnpm prisma:generate ) \
+  || info "prisma generate failed; run 'pnpm prisma:generate' in .worktrees/$name"
+
+if [ "$seed" -eq 1 ]; then
+  info "migrations + seed on $(db_name "$name")…"
+  ( cd "$WT_DIR/$name" && pnpm prisma:migrate:deploy && pnpm prisma:seed ) \
+    || info "migrate/seed failed; check it manually"
+fi
+
+if [ "$aidlc" -eq 1 ]; then
+  info "AI-DLC in the worktree…"
+  ( cd "$WT_DIR/$name" && bash scripts/setup-aidlc.sh ) \
+    || info "AI-DLC setup incomplete in .worktrees/$name: run 'pnpm aidlc:setup' there"
+fi
+
+info "done. Start its app with: .devcontainer/wt/app up $name"

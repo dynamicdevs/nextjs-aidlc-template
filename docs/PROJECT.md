@@ -18,13 +18,16 @@ Template para proyectos Next.js 16 con App Router, TypeScript, Tailwind CSS v4 y
 - **tsx** como test runner nativo de Node.js
 - **PostgreSQL 18 + Prisma 7** con singleton preconfigurado y migraciones
 - **AI-DLC v2 (AWS Labs)** metodología completa de desarrollo asistido por IA, con CLI `aidlc` fijado en `.aidlc-version` y soporte nativo para Claude Code, Codex y opencode
+- **Worktrees para agentes en paralelo** (`.devcontainer/wt/`): rama, BD y app propias por worktree, con las skills `worktree`, `worktree-close` y `release`
 
 ## Estructura del proyecto
 
 ```
-├── .agent/                  # Configuración MCP (fuente de verdad)
+├── .agent/                  # Fuente de verdad de los agentes IA: MCP, skills y hooks
 ├── .aidlc-version           # Versión fijada de AI-DLC
 ├── .devcontainer/           # VS Code Dev Container
+│   └── wt/                  # Worktrees aislados: new, app, status, teardown
+├── .worktrees/              # Worktrees de los agentes (gitignoreado)
 ├── .github/                 # GitHub Actions
 ├── .vscode/                 # VS Code debug config
 ├── aidlc/                   # Workspace AI-DLC (reglas del método, estado, auditoría, artefactos)

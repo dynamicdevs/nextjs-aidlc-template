@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+# status — read-only report of the worktree fleet. The slot registry is implicit
+# (WT_SLOT inside each .worktrees/*/.env), so the leaks are silent in both directions:
+# removing a worktree without `teardown` (a manual rm, a bare `git worktree remove`)
+# strands its Postgres database and its app container, and creating one without `new`
+# (`herdr worktree create`, a bare `git worktree add`) never runs `isolate` and leaves a
+# tree with no .env, no database and no ports. Both show up here.
+#
+#   status     no arguments. Read-only, and never aborts: when docker or postgres are
+#              down the affected checks degrade to "n/a" instead of failing.
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+# get_env is a pipeline and this script runs under pipefail: a missing key would abort.
+val() { get_env "$1" "$2" || true; }
+
+# Databases that are never a worktree's: the trunk's own (DATABASE_URL of the root .env,
+# `nextjs` when there is none) and the test database the root's `pnpm test` uses.
+root_url="$(val "$ROOT/.env" DATABASE_URL)"
+root_db="nextjs"; [ -n "$root_url" ] && root_db="$(url_database "$root_url")"
+keep_dbs=" $root_db ${DB_PREFIX}test "
+
+warns=()
+warn() { warns+=("$*"); }
+
+# --- probes: the root stack may be down; a diagnostic must still print ---------------
+if dbs="$(pg -tAc "SELECT datname FROM pg_database WHERE datname LIKE '${DB_PREFIX}%'" 2>/dev/null)"; then
+  have_dbs=1
+else
+  have_dbs=0; dbs=""
+  warn "postgres unreachable (is the root stack up?): db column and orphan databases not checked"
+fi
+
+if ctrs="$(docker ps -a --format '{{.Names}} {{.State}}' 2>/dev/null)"; then
+  have_ctrs=1
+else
+  have_ctrs=0; ctrs=""
+  warn "docker unreachable: app column and orphan containers not checked"
+fi
+
+has_line() { printf '%s\n' "$2" | grep -qxF "$1"; }
+
+# --- the fleet -----------------------------------------------------------------------
+declare -A slot_owner=()
+names=" "
+claimed_dbs=" "
+
+printf '\033[1m%-22s %-32s %-4s %-6s %-26s %s\033[0m\n' NAME BRANCH SLOT PORT DB APP
+for d in "$WT_DIR"/*/; do
+  [ -d "$d" ] || continue
+  name="$(basename "$d")"
+  names+="$name "
+  branch="$(git -C "$d" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
+
+  if [ ! -f "$d.env" ]; then
+    printf '%-22s %-32s \033[1;33m%s\033[0m\n' "$name" "$branch" "NOT ISOLATED (no .env)"
+    if [ "$branch" = main ]; then
+      # The release worktree, freshly added: it carries a copy of the root's .env, not a slot,
+      # and a teardown would remove main's tree (skill `release`).
+      warn "'$name' holds main and has no .env: copy the root's .env (or .env.example) there
+    and run pnpm install before the release gate (skill \`release\`)"
+    else
+      warn "'$name' has no .env: it was not created with .devcontainer/wt/new, so it has no
+    database and no ports — its app and its migrations will not work.
+    Rebuild it: .devcontainer/wt/teardown $name && .devcontainer/wt/new $name"
+    fi
+    continue
+  fi
+
+  slot="$(val "$d.env" WT_SLOT)"
+  port="$(val "$d.env" APP_PORT)"
+  db="$(url_database "$(val "$d.env" DATABASE_URL)")"
+  claimed_dbs+="$db "
+
+  # The DB column. The trunk's own database is shared on purpose by the release worktree,
+  # whose .env is a copy of the root's; a slotted worktree pointing at it is a leak, since
+  # isolate always writes nextjs_<name>.
+  if [ "$db" = "$root_db" ]; then
+    db_col="$db (shared)"
+    if [ -n "$slot" ]; then
+      warn "'$name' has slot $slot but points at $db, the trunk's database: its migrations and
+    seeds land on the root. Set its DATABASE_URL and DIRECT_URL to $(db_name "$name")"
+    fi
+  elif [ "$have_dbs" -ne 1 ]; then
+    db_col="$db (n/a)"
+  elif has_line "$db" "$dbs"; then
+    db_col="$db"
+  else
+    db_col="$db (MISSING)"
+    warn "'$name' points at database $db, which does not exist. Recreate it with
+    'docker exec $POSTGRES_CONTAINER psql -U $(pg_user) -d postgres -c \"CREATE DATABASE $db\"'
+    and apply the migrations there (pnpm prisma:migrate:deploy), or rebuild the worktree."
+  fi
+
+  if [ -z "$slot" ]; then
+    # Not written by isolate: the release worktree. No slot, no port, no app of its own —
+    # nothing to check against docker, and nothing to rebuild. An empty key would also abort
+    # the script at slot_owner[$slot] (bash: bad array subscript).
+    printf '%-22s %-32s %-4s %-6s %-26s %s\n' "$name" "$branch" "-" "-" "$db_col" "-"
+    continue
+  fi
+
+  if [ -n "${slot_owner[$slot]:-}" ]; then
+    warn "slot $slot is claimed by both '${slot_owner[$slot]}' and '$name': they publish the
+    same host port ($port), so only one of them can have its app up. Tear one down and
+    recreate it to get a fresh slot."
+  else
+    slot_owner[$slot]="$name"
+  fi
+
+  app_col="n/a"
+  [ "$have_ctrs" -eq 1 ] && app_col="$(printf '%s\n' "$ctrs" \
+    | awk -v c="$(project_name "$name")-app" '$1==c{print $2; f=1} END{if(!f) print "down"}')"
+
+  printf '%-22s %-32s %-4s %-6s %-26s %s\n' "$name" "$branch" "$slot" "$port" "$db_col" "$app_col"
+done
+[ "$names" = " " ] && printf '%s\n' "(none)"
+
+# --- worktrees git knows about but that are not ours ---------------------------------
+# Registered paths are absolute HOST paths (see wt/new); the devcontainer also mounts the
+# repo at that same path, so -d works for both. AI-DLC's Bolt worktrees
+# (.aidlc/worktrees/bolt-*, branches bolt-*) belong to its Construction stage and are listed
+# apart. Anything else outside .worktrees/ was created by something other than wt/new —
+# herdr's default is ~/.herdr/worktrees, which lives in the home volume: invisible from the
+# host and outside the app bind mount.
+bolts=()
+while read -r p; do
+  [ -n "$p" ] || continue
+  [ "$p" = "$ROOT" ] && continue
+  [ "$p" = "${HOST_WORKSPACE_PATH:-}" ] && continue
+  case "$p" in
+    */.aidlc/worktrees/bolt-*)
+      bolts+=("$p") ;;
+    */.worktrees/*)
+      if [ ! -d "$p" ]; then
+        warn "git still registers a worktree at $p but the directory is gone.
+    Its database and container (if any) were never cleaned up: run
+    'git worktree prune' and check the orphans below."
+      elif [ -n "${HOST_WORKSPACE_PATH:-}" ]; then
+        # Registered with a path of this container instead of the host's: a bare
+        # `git worktree add` from /var/www/html does that. It opens here (the mirror mount
+        # resolves both) but not from the host — GitKraken, lazygit — which is the whole point
+        # of registering host paths (see wt/new).
+        case "$p" in
+          "$HOST_WORKSPACE_PATH"/*) ;;
+          *) n="${p##*/.worktrees/}"
+             warn "'$n' is registered at $p, a path of this container,
+    not of the host: it opens here but not from the host. Relink it with:
+    git -C \"\$HOST_WORKSPACE_PATH\" worktree repair \"\$HOST_WORKSPACE_PATH/.worktrees/$n\"" ;;
+        esac
+      fi ;;
+    *)
+      warn "worktree registered outside .worktrees/: $p — it bypassed .devcontainer/wt/new,
+    so it has no .env, no database and no ports, and if it sits under \$HOME it is
+    invisible from the host. Remove it with: git worktree remove '$p' --force" ;;
+  esac
+done < <(git -C "$ROOT" worktree list --porcelain 2>/dev/null | awk '/^worktree /{print $2}')
+
+if [ "${#bolts[@]}" -gt 0 ]; then
+  printf '\n\033[1m%s\033[0m\n' "AI-DLC bolts (managed by aidlc, not by wt/*)"
+  printf '  %s\n' "${bolts[@]}"
+fi
+
+# --- leftovers from worktrees that were removed without teardown ---------------------
+if [ "$have_dbs" -eq 1 ]; then
+  while read -r db; do
+    [ -n "$db" ] || continue
+    case "$keep_dbs" in *" $db "*) continue ;; esac
+    case "$claimed_dbs" in *" $db "*) continue ;; esac
+    warn "orphan database $db: no worktree claims it. Drop it with
+    'docker exec $POSTGRES_CONTAINER psql -U $(pg_user) -d postgres -c \"DROP DATABASE $db\"'"
+  done <<< "$dbs"
+fi
+
+if [ "$have_ctrs" -eq 1 ]; then
+  while read -r cname cstate; do
+    case "$cname" in "$WT_PREFIX"*-app) ;; *) continue ;; esac   # the trunk's nextjs-app does not match
+    n="${cname#"$WT_PREFIX"}"; n="${n%-app}"
+    case "$names" in *" $n "*) continue ;; esac
+    warn "orphan container $cname ($cstate): no worktree '$n'. Remove it with
+    'docker rm -f $cname'"
+  done <<< "$ctrs"
+fi
+
+# --- verdict -------------------------------------------------------------------------
+if [ "${#warns[@]}" -eq 0 ]; then
+  printf '\n'; info "no issues found"
+else
+  printf '\n'
+  for w in "${warns[@]}"; do printf '\033[1;33m!\033[0m %s\n' "$w"; done
+fi

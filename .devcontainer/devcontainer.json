@@ -4,7 +4,8 @@
   "service": "nextjs-devcontainer",
   "workspaceFolder": "/var/www/html",
   "remoteEnv": {
-    "OPENCODE_CONFIG": "/var/www/html/.opencode/opencode.json"
+    "OPENCODE_CONFIG": "/var/www/html/.opencode/opencode.json",
+    "HOST_WORKSPACE_PATH": "${localWorkspaceFolder}"
   },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
@@ -38,7 +39,8 @@
   "initializeCommand": "mkdir -p ${localEnv:HOME}/.ssh",
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly"
+    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly",
+    "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached"
   ],
   "customizations": {
     "vscode": {

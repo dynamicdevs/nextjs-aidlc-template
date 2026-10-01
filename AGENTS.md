@@ -17,12 +17,12 @@ Template Next.js 16 + TypeScript + Tailwind CSS v4 con tooling de desarrollo com
 | Codex | `.codex/mcp.json` |
 | Antigravity | `.antigravity/mcp.json` |
 
-Cada herramienta AI (Claude, opencode, Cursor, Kiro) genera sus propios directorios `commands/` y `skills/` automáticamente.
+En `.agent/` viven también las **skills** compartidas (`.agent/skills/`, que `scripts/generate-skills.mjs` enlaza en `.claude/skills/`, `.agents/skills/` —Codex y opencode—, `.kiro/skills/` y `.cline/skills/`) y los **hooks** (`.agent/hooks/`, que `scripts/generate-hooks.mjs` cablea en `.claude/settings.local.json`, porque `.claude/settings.json` es de AI-DLC). Son enlaces y nunca copias: AI-DLC trata `.claude/` y `.agents/` como suyos, adopta en un refresco los ficheros que encuentra en sus `skills/` y los borra en el siguiente.
 
-**Ejecutar tras clonar** para generar la configuración MCP:
+**Ejecutar tras clonar** para generar la configuración MCP, las skills y los hooks (`pnpm install` y el `post-create` del devcontainer lo hacen solos):
 
 ```bash
-node scripts/generate-mcp.mjs
+pnpm generate
 ```
 
 ### Configuración de opencode
@@ -40,6 +40,54 @@ El devcontainer ya tiene esta variable configurada en `remoteEnv`.
 1. Editar `.agent/config/mcp/source.json` (entrada nueva en `servers`)
 2. Si el cliente lo necesita en formato distinto a remote, añadir un case en `to_claude_entry()` dentro del script
 3. Correr `node scripts/generate-mcp.mjs`
+
+## Regla de trabajo: cada cambio, en su worktree
+
+Todo cambio de código y todo workflow de AI-DLC (`/aidlc`) se trabaja en un **worktree propio**,
+nunca en el checkout principal (`/var/www/html`). Se crea con `.devcontainer/wt/new <nombre>`
+—que además aísla la base de datos, los puertos y el contenedor de la app— y se trabaja bajo
+`.worktrees/<nombre>/`, abriendo ahí la sesión del agente. La mecánica completa está en la skill
+`worktree` (el cierre, en `worktree-close`) y en `README.md` § "Worktrees para agentes en paralelo".
+
+Quedan fuera de la regla el trabajo de solo lectura, la configuración del harness en `.claude/` y
+el paso final de fusionar el worktree a `develop`, que sí ocurre en la raíz.
+
+Lo respaldan tres hooks que se cubren entre sí (`.agent/hooks/`, cableados en Claude Code por
+`pnpm generate:hooks`):
+
+- **`PreToolUse`** (`worktree-guard.mjs`) — **bloquea** la escritura en la raíz antes de que
+  ocurra: `Edit`/`Write` y los comandos `Bash` reconocibles como escritura (`sed -i`,
+  redirecciones, `cp`, `mv`, `rm`…), ignorando lo que va entre comillas y los cuerpos de heredoc.
+  Deja pasar lo que git ignora (`node_modules/`, `.env`, `.next/`…) y las herramientas del flujo
+  (`git`, `pnpm`, `docker`, `aidlc`, `herdr`, `.devcontainer/wt/`). Predice, así que una escritura
+  indirecta se le escapa: es la primera línea, no la última.
+- **`PostToolUse`** (`worktree-audit.mjs`) — tras cada tool le pregunta a git qué cambió de verdad
+  (`git status --porcelain`) y avisa una sola vez por cada ruta nueva en la raíz, venga de donde
+  venga la escritura.
+- **`UserPromptSubmit`** (`worktree-reminder.sh`) — recuerda la regla en cada turno, para que no
+  se diluya al compactar.
+
+Se apagan a la vez con `touch .agent/hooks/.disabled` (y se reactivan al borrarlo), y se
+desactivan solos cuando la sesión ya corre dentro de un worktree. Para añadir o cambiar un hook se
+edita `.agent/hooks/hooks.json` y se ejecuta `pnpm generate:hooks`.
+
+### Ramas
+
+| Rama | Rol |
+|------|-----|
+| `agent/<nombre>` | El trabajo de un worktree (`.devcontainer/wt/new`) |
+| `develop` | Integración: la raíz vive aquí y los worktrees se fusionan en ella (skill `worktree-close`) |
+| `main` | Lo que se libera: `develop` se fusiona en `main` con la skill `release`, que escribe la entrada de `CHANGELOG.md` |
+
+Las ramas de trabajo no tocan `CHANGELOG.md`: la entrada nace en la release.
+
+### Skills
+
+| Skill | Para qué |
+|-------|----------|
+| `worktree` | Crear y gestionar worktrees aislados para lanzar agentes en paralelo |
+| `worktree-close` | Cerrar un worktree: commit dentro, `develop` traído y el gate otra vez, fusión desde la raíz, la raíz al día y teardown comprobado |
+| `release` | Liberar `develop` a producción: el mensaje que es la entrada del CHANGELOG, el guion, la fusión y el push de las dos ramas |
 
 ## Metodología: AI-DLC
 
@@ -69,10 +117,14 @@ El workflow se adapta al trabajo mediante *scopes* (`bugfix`, `refactor`, `featu
 
 Ejemplos: `/aidlc bugfix Arreglar el timeout del login`, `/aidlc --status`, `/aidlc --doctor`, `/aidlc --help`.
 
+Por la regla de trabajo, un workflow se lanza desde su worktree: `.devcontainer/wt/new <nombre>`
+(que ya configura AI-DLC dentro), se abre el agente en `.worktrees/<nombre>` y ahí `/aidlc …`. El
+registro del intent viaja con la rama `agent/<nombre>` y llega a `develop` al cerrarlo.
+
 ### Instalación
 
 - `.aidlc-version` fija la versión de AI-DLC del proyecto.
-- `pnpm aidlc:setup` (`scripts/setup-aidlc.sh`) instala el CLI nativo `aidlc` en esa versión (`~/.local/bin/aidlc`) y ejecuta `aidlc config` para cada herramienta instalada. Por defecto configura `claude codex opencode`; se cambia con `AIDLC_HARNESSES` (también admite `kiro`, `kiro-ide`, `cursor` y `copilot`; `copilot` no puede convivir con `opencode`, ni `kiro` con `kiro-ide`). El devcontainer lo ejecuta en `post-create`.
+- `pnpm aidlc:setup` (`scripts/setup-aidlc.sh`) instala el CLI nativo `aidlc` en esa versión (`~/.local/bin/aidlc`) y ejecuta `aidlc config` para Claude Code —siempre y primero: el bloque de AI-DLC que versiona `.gitignore` es el suyo— y para cada herramienta de `AIDLC_HARNESSES` cuya CLI esté instalada (por defecto `codex opencode`; también admite `kiro`, `kiro-ide`, `cursor` y `copilot`; `copilot` no puede convivir con `opencode`, ni `kiro` con `kiro-ide`). El devcontainer lo ejecuta en `post-create`.
 - Tras configurar: en **Claude Code** aprueba los hooks del proyecto con `/hooks` y reinicia; en **Codex** elige *Trust all and continue* en el diálogo de hooks. Verifica con `aidlc doctor`.
 
 ### Qué se versiona

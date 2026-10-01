@@ -14,6 +14,10 @@
     "check": "biome check",
     "commit": "gitmoji -c",
     "aidlc:setup": "bash scripts/setup-aidlc.sh",
+    "generate": "node scripts/generate-mcp.mjs && node scripts/generate-skills.mjs && node scripts/generate-hooks.mjs",
+    "generate:mcp": "node scripts/generate-mcp.mjs",
+    "generate:skills": "node scripts/generate-skills.mjs",
+    "generate:hooks": "node scripts/generate-hooks.mjs",
     "prisma:generate": "rm -rf src/generated/prisma && prisma generate",
     "prisma:migrate": "pnpm prisma:migrate:deploy",
     "prisma:migrate:dev": "prisma migrate dev",
@@ -22,7 +26,7 @@
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
     "prisma:db:setup": "pnpm prisma:migrate:deploy && pnpm prisma:generate && pnpm prisma:seed",
-    "postinstall": "if [ -z \"$NODE_ENV\" ] || [ \"$NODE_ENV\" = \"development\" ]; then if [ -f .agent/config/mcp/source.json ]; then node scripts/generate-mcp.mjs; fi; fi;",
+    "postinstall": "if [ -z \"$NODE_ENV\" ] || [ \"$NODE_ENV\" = \"development\" ]; then if [ -d .agent ]; then node scripts/generate-mcp.mjs && node scripts/generate-skills.mjs && node scripts/generate-hooks.mjs; fi; fi;",
     "prepare": "lefthook install"
   },
   "dependencies": {
