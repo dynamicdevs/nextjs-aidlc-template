@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // PreToolUse guard: code changes must happen inside a worktree, not in the main checkout.
 // Reads the hook payload on stdin and answers with a deny/allow decision.
-// Bypass: touch .agent/hooks/.disabled (or export WT_GUARD_OFF=1).
+// Bypass: touch .agents/hooks/.disabled (or export WT_GUARD_OFF=1).
 import { execFileSync } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The repo root is two levels up from .agent/hooks/ — no tool-specific env var,
+// The repo root is two levels up from .agents/hooks/ — no tool-specific env var,
 // and it resolves to the worktree root when this file runs inside one.
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 // Kill switch, kept out of any single tool's directory and out of git.
@@ -143,6 +143,6 @@ process.stdin.on("end", () => {
       "Project rule: every code change and every /aidlc workflow works from its own worktree. " +
       "Create or reuse one with `.devcontainer/wt/new <name>` (see the `worktree` skill), then edit under .worktrees/<name>/. " +
       "If the user genuinely wants this change in the main checkout, say so and ask them before " +
-      "lifting the guard with `touch .agent/hooks/.disabled` (remove it right after).",
+      "lifting the guard with `touch .agents/hooks/.disabled` (remove it right after).",
   );
 });

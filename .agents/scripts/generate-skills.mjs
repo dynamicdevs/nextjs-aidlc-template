@@ -12,9 +12,11 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
-const sourceDir = ".agent/skills";
+// Not .agents/skills/, where Codex reads skills: AI-DLC's Codex harness owns that directory (see
+// toolTargets below), so a source kept there is deleted on the second refresh, versioned or not.
+const sourceDir = ".agents/shared-skills";
 const absoluteSourceDir = resolve(root, sourceDir);
 
 // An executable on PATH, not a shell word: `command -v continue` succeeds for the builtin.
@@ -92,12 +94,12 @@ for (const tool of requestedTools) {
   mkdirSync(skillsRoot, { recursive: true });
 
   // Retiring a skill must not leave its link dangling. Only links we own (pointing into
-  // .agent/skills/) are pruned — anything a human or another tool put here is not ours.
+  // .agents/shared-skills/) are pruned — anything a human or another tool put here is not ours.
   for (const entry of readdirSync(skillsRoot, { withFileTypes: true })) {
     if (!entry.isSymbolicLink()) continue;
 
     const linkPath = join(skillsRoot, entry.name);
-    if (!readlinkSync(linkPath).includes(join(".agent", "skills"))) continue;
+    if (!readlinkSync(linkPath).includes(join(".agents", "shared-skills"))) continue;
     if (skills.includes(entry.name)) continue;
 
     rmSync(linkPath, { force: true });
@@ -107,7 +109,7 @@ for (const tool of requestedTools) {
 
   for (const name of skills) {
     const linkPath = join(skillsRoot, name);
-    const relTarget = join("..", "..", ".agent", "skills", name);
+    const relTarget = join("..", "..", ".agents", "shared-skills", name);
     const stat = lstatSync(linkPath, { throwIfNoEntry: false });
 
     if (stat?.isSymbolicLink()) {

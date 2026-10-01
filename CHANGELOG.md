@@ -10,6 +10,43 @@ file; what is in `develop` and not yet in `main` is `git log --first-parent main
 The `[Unreleased]` notes below predate this process: the first release folds them into its message,
 and the script replaces that section with the release entry.
 
+## 2026-10-01 — Configuración de agentes en .agents/ y paneles de herdr en la raíz
+
+La configuración versionada de los agentes pasa de `.agent/` a `.agents/`, como en pasi-backend:
+el origen de los MCP en `config/`, los hooks del worktree en `hooks/` y sus generadores en
+`scripts/` (antes en el `scripts/` de la raíz). Las skills compartidas (`worktree`,
+`worktree-close` y `release`) viven en `.agents/shared-skills/` y no en `.agents/skills/`: con
+el harness de Codex configurado, AI-DLC 2.10.0 es dueño de ese directorio, adopta en un refresco
+los ficheros que encuentra y los borra en el siguiente, aunque estén versionados. Solo respeta los
+enlaces simbólicos, así que `.agents/skills/` queda con las skills de AI-DLC y los enlaces a
+`shared-skills/`, y es lo único de `.agents/` que no se versiona.
+
+Un panel nuevo de herdr que arrancaba en `$HOME` (el primero de herdr, o el que se abre tras
+cerrarlos todos) empieza ahora en `/var/www/html`. El resto sigue el directorio del panel del que
+sale, así que un split dentro de un worktree se queda en ese worktree, con su base de datos y sus
+puertos. pgAdmin queda fijado en la versión mayor 9 (hoy 9.18): sin etiqueta, un pull podía
+traer pgAdmin 10.
+
+Para quien lo opera, no hay migraciones ni variables nuevas. En la raíz, y en cada worktree que
+incorpore este cambio, hay que ejecutar `pnpm generate` (o `pnpm install`): hasta entonces los
+hooks de Claude Code apuntan a `.agent/hooks/`, que ya no existe, y fallan. Después hay que borrar
+`.agent/`, donde solo quedan ficheros de estado local de los hooks (`.baseline`, `.disabled`).
+Las sesiones de Claude Code abiertas cargan los hooks al arrancar, así que hay que reiniciarlas o
+revisarlos con `/hooks`. La línea de herdr la añade el `post-create` a `~/.zshrc`, de modo que
+llega al reconstruir el devcontainer. `worktree-close` ejecuta ya `pnpm generate` en la raíz
+cuando una fusión cambia `.agents/`.
+
+El gate pasó sobre este árbol: `pnpm install`, `pnpm check`, `pnpm lint`, `pnpm build` y
+`pnpm test` en verde; la suite de tests sigue vacía (0 tests). Además, dos `pnpm aidlc:setup`
+completos no borraron nada de `.agents/`, `pnpm generate` es idempotente y el arranque de herdr
+se probó en una sesión aparte.
+
+No trae Postgres 19, que aún no tiene imagen en Docker Hub (`postgres:18-alpine` ya es la 18.6),
+ni la base Debian trixie para Node: con ella el devcontainer no construye, porque la opción
+`moby` de `docker-outside-of-docker` no tiene paquetes para trixie. Tras desplegar, conviene
+comprobar que `pnpm generate` enlaza las tres skills y que
+`node .agents/scripts/generate-hooks.mjs --check` dice que los hooks están al día.
+
 ## 2026-10-01 — Agentes en paralelo en worktrees aislados, herdr con zsh y AI-DLC v2
 
 Cada agente trabaja ahora en su propio worktree aislado. `.devcontainer/wt/new <nombre>` crea la

@@ -1,12 +1,12 @@
 {
   "$comment": [
     "Tool-neutral hook manifest — the single source of truth for lifecycle hooks.",
-    "Each tool's adapter lives in scripts/generate-hooks.mjs and maps these events and tool",
-    "names onto whatever that tool calls them. Events: 'before-tool' (may block),",
+    "Each tool's adapter lives in .agents/scripts/generate-hooks.mjs and maps these events and",
+    "tool names onto whatever that tool calls them. Events: 'before-tool' (may block),",
     "'after-tool' (reports), 'user-prompt' (injects context). Tool names: edit | write |",
     "notebook-edit | shell. Scripts are referenced in place, not copied: the generator only",
     "writes the wiring, so the code has exactly one home.",
-    "Kill switch for all of them: touch .agent/hooks/.disabled"
+    "Kill switch for all of them: touch .agents/hooks/.disabled"
   ],
   "hooks": [
     {

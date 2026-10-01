@@ -1,7 +1,7 @@
 #!/bin/sh
 # UserPromptSubmit: keeps the "work in a worktree" rule alive across compaction.
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
-[ -f "$ROOT/.agent/hooks/.disabled" ] && exit 0
+[ -f "$ROOT/.agents/hooks/.disabled" ] && exit 0
 # A linked worktree has .git as a file: the session already follows the rule.
 [ -d "$ROOT/.git" ] || exit 0
 

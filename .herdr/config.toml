@@ -18,6 +18,12 @@ agent_panel_sort = "spaces"
 [terminal]
 default_shell = "/bin/zsh"
 
+# Left on "follow" on purpose: a new pane inherits the directory of the one it comes from, so a
+# split inside a worktree stays in that worktree (its database, its ports, its .env). A fixed
+# path here would send it to the root checkout. The one pane "follow" starts in $HOME — with no
+# source workspace — is moved to the project root by ~/.zshrc (.devcontainer/post-create.sh).
+new_cwd = "follow"
+
 # Worktrees here go through .devcontainer/wt/new, which isolates the Postgres database, the
 # ports and the .env. `herdr worktree create` does a bare `git worktree add`: `isolate` never
 # runs, so the tree comes out with no .env, no database and no ports — and by default it lands

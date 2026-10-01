@@ -141,7 +141,7 @@ http://localhost:3000
 Tooling para lanzar **varios agentes a la vez sin que se pisen el código ni la base de datos**.
 Cada agente trabaja en su propio `git worktree`, con su rama, su base de datos Postgres y
 (opcionalmente) su propia app en un puerto propio. Todo vive en `.devcontainer/wt/`; los agentes
-lo usan a través de las skills `worktree`, `worktree-close` y `release` (`.agent/skills/`).
+lo usan a través de las skills `worktree`, `worktree-close` y `release` (`.agents/shared-skills/`).
 
 ### Modelo mental
 

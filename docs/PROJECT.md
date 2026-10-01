@@ -23,7 +23,7 @@ Template para proyectos Next.js 16 con App Router, TypeScript, Tailwind CSS v4 y
 ## Estructura del proyecto
 
 ```
-├── .agent/                  # Fuente de verdad de los agentes IA: MCP, skills y hooks
+├── .agents/                 # Fuente de verdad de los agentes IA: MCP, skills, hooks y sus generadores
 ├── .aidlc-version           # Versión fijada de AI-DLC
 ├── .devcontainer/           # VS Code Dev Container
 │   └── wt/                  # Worktrees aislados: new, app, status, teardown
@@ -65,7 +65,7 @@ Template para proyectos Next.js 16 con App Router, TypeScript, Tailwind CSS v4 y
 
 1. Clonar el repositorio
 2. Copiar `.env.example` a `.env` y configurar `DATABASE_URL`
-3. Ejecutar `pnpm install` (ejecuta `node scripts/generate-mcp.mjs` y `lefthook install` automáticamente)
+3. Ejecutar `pnpm install` (ejecuta `node .agents/scripts/generate-mcp.mjs` y `lefthook install` automáticamente)
 4. Ejecutar `pnpm prisma:generate` para generar el cliente Prisma
 5. Ejecutar `pnpm prisma migrate dev` para crear la base de datos
 6. Fuera del devcontainer, ejecutar `pnpm aidlc:setup` para instalar y configurar AI-DLC (el devcontainer lo hace en `post-create`)
