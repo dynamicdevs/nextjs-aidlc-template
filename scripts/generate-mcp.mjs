@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -56,8 +56,10 @@ function toStdioEntry(name) {
 
 const stdioServers = Object.fromEntries(serverNames.map((name) => [name, toStdioEntry(name)]));
 
+// .claude/settings.json belongs to AI-DLC (hooks, permissions); Claude Code reads
+// project MCP servers from .mcp.json, which is merged to keep entries added by others.
 const toolOutputs = [
-  { dir: ".claude", file: "settings.json", type: "mcpServers", tool: "claude" },
+  { dir: ".", file: ".mcp.json", type: "mcpServers", tool: "claude", merge: true },
   { dir: ".opencode", file: "opencode.json", type: "opencode", tool: "opencode" },
   { dir: ".cursor", file: "mcp.json", type: "mcpServers", tool: "cursor" },
   { dir: ".kilo", file: "kilo.json", type: "mcpServers", tool: "kilo" },
@@ -71,12 +73,26 @@ const toolOutputs = [
 let generated = 0;
 let skipped = 0;
 
-for (const { dir, file, type, tool } of toolOutputs) {
+for (const { dir, file, type, tool, merge } of toolOutputs) {
+  const target = join(dir, file);
   const detector = toolDetectors[tool];
   if (detector && !detector()) {
-    console.log(`✗ ${dir}/${file} (${tool} not found)`);
+    console.log(`✗ ${target} (${tool} not found)`);
     skipped++;
     continue;
+  }
+
+  let existing = {};
+  if (merge) {
+    try {
+      existing = JSON.parse(readFileSync(resolve(root, target), "utf-8"));
+    } catch (error) {
+      if (error.code !== "ENOENT") {
+        console.error(`✗ ${target} (invalid JSON, left untouched)`);
+        skipped++;
+        continue;
+      }
+    }
   }
 
   mkdirSync(resolve(root, dir), { recursive: true });
@@ -84,11 +100,11 @@ for (const { dir, file, type, tool } of toolOutputs) {
   const content =
     type === "opencode"
       ? { $schema: "https://opencode.ai/config.json", mcp: servers }
-      : { mcpServers: stdioServers };
+      : { ...existing, mcpServers: { ...existing.mcpServers, ...stdioServers } };
 
-  writeFileSync(resolve(root, dir, file), `${JSON.stringify(content, null, 2)}\n`);
+  writeFileSync(resolve(root, target), `${JSON.stringify(content, null, 2)}\n`);
 
-  console.log(`✓ ${dir}/${file}`);
+  console.log(`✓ ${target}`);
   generated++;
 }
 

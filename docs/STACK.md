@@ -43,7 +43,7 @@ pnpm dlx shadcn@latest add button
 
 ## AI Tooling
 - **MCP**: Configuración generada desde `.agent/` para Claude, opencode, Cursor, Kiro, Kilocode, GitHub Copilot, Codex y Antigravity
-- **AI-DLC (AWS Labs)**: Metodología completa de desarrollo asistido por IA con 3 fases (inception → construction → operations). Reglas en `.aidlc/aidlc-rules/`. Plugins: `opencode-aidlc` y `claudecode-aidlc` como dev dependencies opcionales
+- **AI-DLC v2 (AWS Labs)**: Metodología de desarrollo asistido por IA con 5 fases (initialization → ideation → inception → construction → operation). CLI nativo `aidlc` fijado en `.aidlc-version` e instalado por `pnpm aidlc:setup`, que genera los runtimes de Claude Code, Codex y opencode. Workspace versionado en `aidlc/`
 
 ## Extensiones VS Code recomendadas
 - Tailwind CSS IntelliSense

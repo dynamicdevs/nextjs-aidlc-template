@@ -56,19 +56,29 @@ docker volume ls | grep nextjs
 
 ## AI-DLC Workflow
 
-La metodología AI-DLC orquesta el desarrollo en 3 fases:
+La metodología AI-DLC v2 orquesta el desarrollo en 5 fases (33 etapas); el *scope* decide cuáles se ejecutan:
 
 ```bash
-# INCEPTION — análisis y diseño (automático al iniciar sesión AI)
-# El agente detecta el workspace, analiza requisitos y genera unidades de trabajo
-
-# CONSTRUCTION — implementación por unidad
-# El agente ejecuta: diseño funcional → código → build → test
-
-# OPERATIONS — despliegue (futuro)
+# INITIALIZATION — estado del workflow y detección del workspace (siempre)
+# IDEATION       — intención, alcance y viabilidad
+# INCEPTION      — prácticas, requisitos, historias, diseño y unidades de trabajo
+# CONSTRUCTION   — por unidad: diseño funcional → NFRs → código → build y test → CI
+# OPERATION      — pipeline, entornos, despliegue, observabilidad
 ```
 
-Los checkpoints de validación humana ocurren entre cada etapa. El estado del workflow se persist en `aidlc-docs/aidlc-state.md`.
+```bash
+# En Claude Code u opencode (en Codex usa $aidlc)
+/aidlc Añadir notificaciones a clientes   # nuevo workflow (scope inferido)
+/aidlc bugfix Arreglar el timeout del login
+/aidlc --status                          # fase y etapa actuales
+/aidlc --doctor                          # diagnóstico desde la sesión
+
+# En la terminal
+pnpm aidlc:setup                         # instalar/configurar AI-DLC (versión de .aidlc-version)
+aidlc doctor                             # diagnóstico del CLI, runtimes, hooks y estado
+```
+
+Los checkpoints de validación humana ocurren en cada gate. Cada workflow (intent) guarda su estado, auditoría y artefactos en `aidlc/spaces/<space>/intents/<YYMMDD>-<label>/`, que se versionan con el proyecto.
 
 ## Comandos del proyecto
 
@@ -81,6 +91,7 @@ pnpm check            # Biome check (formato + lint)
 pnpm format           # Biome format (aplica correcciones)
 pnpm commit           # Commit con gitmoji
 pnpm test             # Ejecutar tests con tsx
+pnpm aidlc:setup      # Instalar y configurar AI-DLC
 ```
 
 ## Prisma

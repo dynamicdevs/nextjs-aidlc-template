@@ -114,13 +114,21 @@ pnpm prisma:generate
 pnpm prisma migrate dev
 ```
 
-### 5. Iniciar servidor
+### 5. Configurar AI-DLC (opcional)
+
+Instala el CLI `aidlc` en la versión de `.aidlc-version` y configura las herramientas de IA instaladas:
+
+```bash
+pnpm aidlc:setup
+```
+
+### 6. Iniciar servidor
 
 ```bash
 pnpm dev
 ```
 
-### 6. Abrir en el navegador
+### 7. Abrir en el navegador
 
 ```
 http://localhost:3000
@@ -153,13 +161,15 @@ docker compose exec postgres pg_isready -U username
 
 ## Metodología: AI-DLC
 
-Este template utiliza **AI-DLC (AI-Driven Development Life Cycle)**, una metodología de AWS Labs que transforma la codificación asistida por IA en un proceso disciplinado y repetible con validación humana en cada etapa.
+Este template utiliza **AI-DLC v2 (AI-Driven Development Life Cycle)**, una metodología de AWS Labs ([awslabs/aidlc-workflows](https://github.com/awslabs/aidlc-workflows)) que transforma la codificación asistida por IA en un proceso disciplinado y repetible con validación humana en cada etapa.
 
-- **INCEPTION**: Análisis de requisitos → diseño → unidades de trabajo
-- **CONSTRUCTION**: Diseño funcional → código → tests (por unidad)
-- **OPERATIONS**: Despliegue y operación
+- **INITIALIZATION**: Estado del workflow y detección del workspace
+- **IDEATION**: Intención → alcance → viabilidad
+- **INCEPTION**: Requisitos → historias → diseño → unidades de trabajo
+- **CONSTRUCTION**: Diseño funcional → código → build y test (por unidad)
+- **OPERATION**: Despliegue → observabilidad → optimización
 
-Las reglas están en `.aidlc/aidlc-rules/` y se activan automáticamente con los plugins `opencode-aidlc` / `claudecode-aidlc`.
+La versión está fijada en `.aidlc-version`. El devcontainer instala el CLI `aidlc` y configura Claude Code, Codex y opencode al crearse; fuera de él, ejecuta `pnpm aidlc:setup`. Después inicia un workflow con `/aidlc <qué quieres construir>` (en Codex, `$aidlc`). Más detalles en [AGENTS.md](AGENTS.md#metodología-ai-dlc).
 
 ## Más información
 

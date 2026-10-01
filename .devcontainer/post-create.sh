@@ -43,17 +43,9 @@ if ! command -v kimi >/dev/null 2>&1; then
 curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
 fi
 
-if command -v claude >/dev/null 2>&1; then
-  pnpm exec claudecode-aidlc setup
-fi
-
-if command -v opencode >/dev/null 2>&1; then
-  pnpm exec opencode-aidlc setup --nested
-fi
-
-if command -v codex >/dev/null 2>&1; then
-  pnpm exec codex-aidlc-plugin setup --nested
-fi
+# AI-DLC: install the CLI pinned in .aidlc-version and configure every
+# installed harness (Claude Code, Codex, opencode). Never blocks the container.
+bash scripts/setup-aidlc.sh || echo "aidlc: setup incomplete; run 'pnpm aidlc:setup' to retry"
 
 sudo chown -R node:node /home/node 2>/dev/null
 

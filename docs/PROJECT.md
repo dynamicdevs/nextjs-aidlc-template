@@ -17,16 +17,17 @@ Template para proyectos Next.js 16 con App Router, TypeScript, Tailwind CSS v4 y
 - **Playwright** para tests end-to-end
 - **tsx** como test runner nativo de Node.js
 - **PostgreSQL 18 + Prisma 7** con singleton preconfigurado y migraciones
-- **AI-DLC (AWS Labs)** metodología completa de desarrollo asistido por IA con reglas en `.aidlc/` y plugins para opencode y Claude Code
+- **AI-DLC v2 (AWS Labs)** metodología completa de desarrollo asistido por IA, con CLI `aidlc` fijado en `.aidlc-version` y soporte nativo para Claude Code, Codex y opencode
 
 ## Estructura del proyecto
 
 ```
 ├── .agent/                  # Configuración MCP (fuente de verdad)
-├── .aidlc/                  # Reglas AI-DLC (inception, construction, operations)
+├── .aidlc-version           # Versión fijada de AI-DLC
 ├── .devcontainer/           # VS Code Dev Container
 ├── .github/                 # GitHub Actions
 ├── .vscode/                 # VS Code debug config
+├── aidlc/                   # Workspace AI-DLC (reglas del método, estado, auditoría, artefactos)
 ├── docs/                    # Documentación
 ├── scripts/                 # Scripts de setup
 ├── src/
@@ -64,4 +65,5 @@ Template para proyectos Next.js 16 con App Router, TypeScript, Tailwind CSS v4 y
 3. Ejecutar `pnpm install` (ejecuta `node scripts/generate-mcp.mjs` y `lefthook install` automáticamente)
 4. Ejecutar `pnpm prisma:generate` para generar el cliente Prisma
 5. Ejecutar `pnpm prisma migrate dev` para crear la base de datos
-6. Iniciar desarrollo con `pnpm dev`
+6. Fuera del devcontainer, ejecutar `pnpm aidlc:setup` para instalar y configurar AI-DLC (el devcontainer lo hace en `post-create`)
+7. Iniciar desarrollo con `pnpm dev`

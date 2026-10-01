@@ -3,7 +3,7 @@
 ## Overview
 
 Multi-container Docker setup para desarrollo local con Next.js + PostgreSQL + Prisma.
-Incluye la metodología **AI-DLC (AWS Labs)** con reglas de desarrollo asistido por IA en `.aidlc/`.
+Incluye la metodología **AI-DLC v2 (AWS Labs)**: el devcontainer instala el CLI `aidlc` (en el volumen `nextjs-node-home`) y el workspace del método vive en `aidlc/`.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
