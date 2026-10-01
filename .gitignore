@@ -22,7 +22,7 @@ build/
 !.vscode/launch.json
 !.vscode/settings.json
 
-# AI tools — generated per machine by scripts/generate-*.mjs and scripts/setup-aidlc.sh
+# AI tools — generated per machine by .agents/scripts/generate-*.mjs and scripts/setup-aidlc.sh
 .claude/
 .opencode/
 .cursor/
@@ -38,13 +38,15 @@ build/
 .junie/
 .github/prompts
 .github/skills
-.agents/
+# Only skills/ in .agents/, which is otherwise versioned: AI-DLC's skills for Codex and opencode
+# plus the links to .agents/shared-skills/.
+.agents/skills/
 .aidlc/
 .mcp.json
 opencode.json
-# Local kill switch and state of the worktree hooks (see .agent/hooks/hooks.json)
-.agent/hooks/.disabled
-.agent/hooks/.baseline
+# Local kill switch and state of the worktree hooks (see .agents/hooks/hooks.json)
+.agents/hooks/.disabled
+.agents/hooks/.baseline
 
 # Worktrees for parallel agents (.devcontainer/wt/)
 .worktrees/

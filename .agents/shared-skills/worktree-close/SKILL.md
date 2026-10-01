@@ -83,6 +83,9 @@ default:
   (code changes alone hot-reload).
 - AI-DLC: if `.aidlc-version` changed, `pnpm aidlc:setup` in the root, between workflows
   (`aidlc config` refuses to refresh while a workflow is active).
+- Agent config: if `.agents/` changed, `pnpm generate` in the root. The MCP files, the skill links
+  and the hook wiring there are generated from it, and a hook that moved or was renamed fails in
+  every root session until they are rewritten.
 
 ## 5. Teardown — from the root
 Only after step 3 printed equal trees (`&&`, never `;`):

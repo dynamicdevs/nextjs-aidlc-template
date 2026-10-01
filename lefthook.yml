@@ -6,12 +6,12 @@ pre-commit:
       run: pnpm biome check --write --no-errors-on-unmatched {staged_files}
       stage_fixed: true
     agent-config:
-      glob: ".agent/config/**"
-      run: node scripts/generate-mcp.mjs && git diff --exit-code -- .mcp.json .opencode/opencode.json .cursor/mcp.json .kiro/mcp.json .kilocode/mcp.json .copilot/mcp.json .codex/mcp.json .antigravity/mcp.json
-      fail_text: "Drift detectado entre .agent/ y los configs generados. Haz commit de los archivos MCP regenerados."
+      glob: ".agents/config/**"
+      run: node .agents/scripts/generate-mcp.mjs && git diff --exit-code -- .mcp.json .opencode/opencode.json .cursor/mcp.json .kiro/mcp.json .kilocode/mcp.json .copilot/mcp.json .codex/mcp.json .antigravity/mcp.json
+      fail_text: "Drift detectado entre .agents/ y los configs generados. Haz commit de los archivos MCP regenerados."
     agent-hooks:
-      glob: ".agent/hooks/**"
-      run: node scripts/generate-hooks.mjs
+      glob: ".agents/hooks/**"
+      run: node .agents/scripts/generate-hooks.mjs
 
 commit-msg:
   commands:
