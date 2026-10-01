@@ -72,3 +72,15 @@ sudo chown -R node:node /home/node 2>/dev/null
 if [ -f "$HOME/.zshrc" ]; then
   sed -i 's/^ZSH_THEME=.*/ZSH_THEME=norm/' "$HOME/.zshrc"
 fi
+
+# herdr opens its panes with new_cwd = "follow" (.herdr/config.toml): a new pane inherits the
+# directory of the one it comes from, so a split inside a worktree stays in that worktree. With no
+# source workspace, though (herdr's first one, or after closing them all), it starts in $HOME.
+# Only that pane is moved to the project root; a fixed new_cwd would move them all.
+if [ -f "$HOME/.zshrc" ] && ! grep -q '^# herdr: project root' "$HOME/.zshrc"; then
+  cat >> "$HOME/.zshrc" <<'EOF'
+
+# herdr: project root (added by .devcontainer/post-create.sh)
+[[ -n $HERDR_ENV && $PWD == $HOME ]] && cd /var/www/html
+EOF
+fi
